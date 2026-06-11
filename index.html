@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>報價單系統</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  background: #e8e8e8;
+  color: #333;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  background: #2c3e50;
+  padding: 10px 24px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.toolbar button {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: bold;
+}
+.btn-print  { background: #27ae60; color: #fff; }
+.btn-reset  { background: #e74c3c; color: #fff; }
+.hint { color: #888; font-size: 11px; margin-left: auto; }
+
+/* ── A4 Page ── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 20px auto;
+  background: #fff;
+  padding: 14mm 15mm;
+  box-shadow: 0 4px 24px rgba(0,0,0,.15);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+#logoArea {
+  width: 44%;
+  min-height: 85px;
+  border: 1px solid #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+#logoArea:hover { border-color: #3498db; }
+#logoImg { max-width: 100%; max-height: 90px; object-fit: contain; display: none; }
+.logo-hint { color: #bbb; text-align: center; line-height: 1.6; pointer-events: none; }
+.logo-hint strong { display: block; font-size: 14px; color: #999; }
+
+.quote-meta { text-align: right; }
+.quote-meta table { border-collapse: collapse; margin-left: auto; }
+.quote-meta td { padding: 3px 5px; }
+.meta-label { color: #555; white-space: nowrap; }
+.meta-value { font-weight: bold; padding-left: 15px !important; }
+.meta-input {
+  border: none; outline: none;
+  font-family: inherit; font-size: 12px; font-weight: bold;
+  text-align: right; width: 130px; background: transparent;
+}
+.meta-input:focus { border-bottom: 1px solid #3498db; }
+.expiry-red { color: #e74c3c; font-weight: bold; font-size: 12px; }
+
+/* ── Info Section ── */
+.info-section {
+  display: flex;
+  gap: 24px;
+  margin: 14px 0;
+}
+.col-half { width: 50%; }
+
+.info-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 4px 0;
+  margin-bottom: 2px;
+}
+.info-label {
+  min-width: 100px;
+  color: #444;
+  font-weight: bold;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.info-input {
+  flex: 1;
+  border: none; outline: none;
+  font-family: inherit; font-size: 12px;
+  background: transparent;
+}
+.info-input:focus { background: #f0f8ff; }
+
+/* ── Items Table ── */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 4px;
+  font-size: 11px;
+}
+.items-table th {
+  background: #f0f0f0;
+  border: 1px solid #bbb;
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.items-table td {
+  border: 1px solid #ccc;
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+.items-table td.no { width: 28px; text-align: center; color: #666; }
+.items-table td.name { width: 85px; }
+.items-table td.spec { }
+.items-table td.qty  { width: 42px; }
+.items-table td.unit { width: 35px; }
+.items-table td.price { width: 72px; }
+.items-table td.subtotal { width: 72px; background: #fafafa; }
+.items-table td.remark { width: 72px; }
+.items-table td.act { width: 24px; text-align: center; }
+
+.cell-input {
+  width: 100%; border: none; outline: none;
+  font-family: inherit; font-size: 11px;
+  background: transparent;
+}
+.cell-input:focus { background: #fffde7; }
+.cell-input.right { text-align: right; }
+.cell-input.center { text-align: center; }
+.spec-ta {
+  width: 100%; border: none; outline: none;
+  font-family: inherit; font-size: 11px;
+  resize: none; background: transparent;
+  line-height: 1.5; min-height: 32px;
+  overflow: hidden;
+}
+.spec-ta:focus { background: #fffde7; }
+.remark-ta { min-height: 20px; }
+
+.sub-display {
+  display: block; text-align: right;
+  font-weight: bold; padding: 0 2px;
+  white-space: nowrap;
+}
+.btn-remove {
+  background: none; border: none;
+  color: #ccc; cursor: pointer;
+  font-size: 17px; line-height: 1;
+  padding: 0;
+  transition: color .15s;
+}
+.btn-remove:hover { color: #e74c3c; }
+
+.add-row-btn {
+  padding: 4px 14px;
+  background: #3498db; color: #fff;
+  border: none; border-radius: 3px;
+  cursor: pointer; font-size: 11px;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+.add-row-btn:hover { background: #217dbb; }
+
+/* ── Summary ── */
+.summary-wrap { display: flex; justify-content: flex-end; margin: 6px 0 12px; }
+.summary-table { border-collapse: collapse; min-width: 210px; }
+.summary-table td { border: 1px solid #bbb; padding: 5px 10px; }
+.summary-table td:first-child { background: #f5f5f5; font-weight: bold; white-space: nowrap; }
+.summary-table td:last-child { text-align: right; min-width: 110px; font-weight: bold; }
+.total-row td { font-size: 13px; font-weight: bold; }
+.total-amount { color: #e74c3c; }
+
+/* ── Footer Boxes ── */
+.footer-section { display: flex; gap: 14px; }
+.footer-box { flex: 1; border: 1px solid #999; padding: 8px 10px; }
+.footer-title { font-weight: bold; font-size: 11px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; margin-bottom: 6px; }
+.footer-ta {
+  width: 100%; border: none; outline: none;
+  font-family: inherit; font-size: 11px;
+  resize: none; background: transparent;
+  min-height: 68px; line-height: 1.7;
+}
+.footer-ta:focus { background: #f9f9f9; }
+
+/* ── Print ── */
+@media print {
+  body { background: #fff; }
+  .toolbar { display: none !important; }
+  .page { margin: 0; padding: 12mm 14mm; box-shadow: none; }
+  .act { display: none !important; }
+  .add-row-btn { display: none !important; }
+  #logoArea { border-color: #999; cursor: default; }
+  .logo-hint { display: none; }
+  #logoImg { display: block !important; }
+
+  .info-input,
+  .meta-input,
+  .cell-input,
+  .spec-ta,
+  .footer-ta {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .info-input:focus,
+  .cell-input:focus,
+  .spec-ta:focus { background: transparent; }
+}
+@page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="btn-print" onclick="window.print()">🖨 列印 / 匯出 PDF</button>
+  <button class="btn-reset" onclick="resetForm()">↺ 清除重填</button>
+  <span class="hint">點擊左上角 LOGO 區域可上傳圖片</span>
+</div>
+
+<!-- A4 Page -->
+<div class="page" id="quotePage">
+
+  <!-- Header -->
+  <div class="header">
+    <div id="logoArea" onclick="document.getElementById('logoInput').click()" title="點擊上傳 LOGO">
+      <img id="logoImg" alt="公司LOGO">
+      <div class="logo-hint"><strong>公司 LOGO</strong><small>點擊上傳圖片</small></div>
+    </div>
+    <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="uploadLogo(this)">
+
+    <div class="quote-meta">
+      <table>
+        <tr>
+          <td class="meta-label">報價編號：</td>
+          <td class="meta-value"><input class="meta-input" id="quoteNo"></td>
+        </tr>
+        <tr>
+          <td class="meta-label">報價有效期限(天)：</td>
+          <td class="meta-value"><input class="meta-input" id="validDays" type="number" value="7" min="1" oninput="calcExpiry()"></td>
+        </tr>
+        <tr>
+          <td class="meta-label">報價日期：</td>
+          <td class="meta-value"><input class="meta-input" id="quoteDate" type="date" oninput="calcExpiry()"></td>
+        </tr>
+        <tr>
+          <td class="meta-label">報價至期限：</td>
+          <td class="meta-value"><span class="expiry-red" id="expiryDate">—</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Company & Customer Info -->
+  <div class="info-section">
+    <div class="col-half">
+      <div class="info-row"><span class="info-label">公司名稱：</span><input class="info-input" id="companyName" placeholder="（請填入公司名稱）"></div>
+      <div class="info-row"><span class="info-label">聯絡地址：</span><input class="info-input" placeholder="（請填入地址）"></div>
+      <div class="info-row"><span class="info-label">電話 / Email：</span><input class="info-input" placeholder="（請填入電話 / Email）"></div>
+      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" placeholder="（請填入統編）"></div>
+    </div>
+    <div class="col-half">
+      <div class="info-row"><span class="info-label">客戶公司：</span><input class="info-input" placeholder="（請填入客戶公司）"></div>
+      <div class="info-row"><span class="info-label">電話：</span><input class="info-input" placeholder="（請填入客戶電話）"></div>
+      <div class="info-row"><span class="info-label">聯絡人：</span><input class="info-input" placeholder="（請填入聯絡人）"></div>
+      <div class="info-row"><span class="info-label">Email：</span><input class="info-input" placeholder="（請填入 Email）"></div>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width:28px">項次</th>
+        <th style="width:85px">品名</th>
+        <th>規格說明</th>
+        <th style="width:42px">數量</th>
+        <th style="width:35px">單位</th>
+        <th style="width:72px">單價(未稅)</th>
+        <th style="width:72px">小計</th>
+        <th style="width:72px">備註</th>
+        <th class="act" style="width:24px"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+  <button class="add-row-btn" onclick="addRow()">＋ 新增品項</button>
+
+  <!-- Summary -->
+  <div class="summary-wrap">
+    <table class="summary-table">
+      <tr>
+        <td>未稅小計</td>
+        <td id="subtotalDisplay">0</td>
+      </tr>
+      <tr>
+        <td>營業稅 5%</td>
+        <td id="taxDisplay">0</td>
+      </tr>
+      <tr class="total-row">
+        <td>總計金額（含稅）</td>
+        <td class="total-amount" id="totalDisplay">0</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-section">
+    <div class="footer-box">
+      <div class="footer-title">付款條件：</div>
+      <textarea class="footer-ta" placeholder="例：&#10;1. 簽約後預付總金額 30% 作為訂金&#10;2. 專案完成並驗收後 7 日內支付尾款"></textarea>
+    </div>
+    <div class="footer-box">
+      <div class="footer-title">備註與條款：</div>
+      <textarea class="footer-ta" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認"></textarea>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+let rowId = 0;
+
+function init() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  document.getElementById('quoteDate').value = `${y}-${m}-${d}`;
+  document.getElementById('quoteNo').value = `${y}${m}${d}-001`;
+  calcExpiry();
+  addRow(); addRow(); addRow();
+}
+
+function calcExpiry() {
+  const val = document.getElementById('quoteDate').value;
+  const days = parseInt(document.getElementById('validDays').value) || 0;
+  const el = document.getElementById('expiryDate');
+  if (!val) { el.textContent = '—'; return; }
+  const d = new Date(val);
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  el.textContent = `${y}/${m}/${dd}`;
+}
+
+function addRow() {
+  rowId++;
+  const id = rowId;
+  const tr = document.createElement('tr');
+  tr.id = `row-${id}`;
+  tr.innerHTML = `
+    <td class="no num-cell">${document.querySelectorAll('#itemsBody tr').length + 1}</td>
+    <td class="name"><input class="cell-input" placeholder="品名"></td>
+    <td class="spec"><textarea class="spec-ta" rows="2" placeholder="規格說明（支援多行）" oninput="autoResize(this)"></textarea></td>
+    <td class="qty"><input class="cell-input right" id="qty-${id}" type="number" value="1" min="0" oninput="calcRow(${id})"></td>
+    <td class="unit"><input class="cell-input center" value="式"></td>
+    <td class="price"><input class="cell-input right" id="price-${id}" type="text" placeholder="0" oninput="calcRow(${id})"></td>
+    <td class="subtotal"><span class="sub-display" id="sub-${id}"></span></td>
+    <td class="remark"><textarea class="spec-ta remark-ta" rows="1" placeholder="備註" oninput="autoResize(this)"></textarea></td>
+    <td class="act"><button class="btn-remove" onclick="removeRow(${id})" title="刪除此行">×</button></td>
+  `;
+  document.getElementById('itemsBody').appendChild(tr);
+  calcTotal();
+}
+
+function calcRow(id) {
+  const qtyEl   = document.getElementById(`qty-${id}`);
+  const priceEl = document.getElementById(`price-${id}`);
+  const subEl   = document.getElementById(`sub-${id}`);
+  if (!qtyEl || !priceEl || !subEl) return;
+
+  const qty   = parseFloat(qtyEl.value) || 0;
+  const rawP  = priceEl.value.trim();
+  const isGift = rawP === '贈送' || rawP === '贈';
+
+  if (isGift) {
+    subEl.textContent = '贈送';
+    subEl.dataset.val = '0';
+  } else {
+    const price = parseFloat(rawP.replace(/,/g, '')) || 0;
+    const sub   = qty * price;
+    subEl.textContent  = sub > 0 ? sub.toLocaleString() : (rawP === '' ? '' : '0');
+    subEl.dataset.val  = String(sub);
+  }
+  calcTotal();
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="sub-"]').forEach(el => {
+    total += parseFloat(el.dataset.val || el.textContent.replace(/,/g,'')) || 0;
+  });
+  const tax   = Math.round(total * 0.05);
+  const grand = total + tax;
+  document.getElementById('subtotalDisplay').textContent = total.toLocaleString();
+  document.getElementById('taxDisplay').textContent      = tax.toLocaleString();
+  document.getElementById('totalDisplay').textContent    = grand.toLocaleString();
+}
+
+function removeRow(id) {
+  const row = document.getElementById(`row-${id}`);
+  if (row) row.remove();
+  renumber();
+  calcTotal();
+}
+
+function renumber() {
+  document.querySelectorAll('#itemsBody tr').forEach((tr, i) => {
+    const cell = tr.querySelector('.num-cell');
+    if (cell) cell.textContent = i + 1;
+  });
+}
+
+function uploadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('logoImg');
+    const hint = document.querySelector('.logo-hint');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    if (hint) hint.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function resetForm() {
+  if (!confirm('確定要清除所有內容並重新填寫嗎？')) return;
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
