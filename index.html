@@ -21,9 +21,6 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 .toolbar button {
   padding: 7px 16px;
@@ -208,6 +205,40 @@ body {
 }
 .footer-ta:focus { background: #f9f9f9; }
 
+/* ── Payment Method ── */
+.pay-section {
+  margin-top: 12px;
+  border: 1px solid #999;
+  padding: 8px 10px;
+}
+.pay-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 6px 0 8px;
+}
+.pay-opts label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.pay-opts input[type=checkbox] { width: 14px; height: 14px; accent-color: #2c3e50; cursor: pointer; }
+.pay-detail {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  outline: none;
+  font-size: 12px;
+  padding-top: 6px;
+  margin-top: 2px;
+  font-family: inherit;
+  background: transparent;
+  color: #333;
+}
+.pay-detail::placeholder { color: #ccc; }
+
 /* ── Print ── */
 @media print {
   body { background: #fff; }
@@ -223,7 +254,12 @@ body {
   .meta-input,
   .cell-input,
   .spec-ta,
-  .footer-ta {
+  .footer-ta,
+  .pay-detail {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pay-opts input[type=checkbox] {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -339,6 +375,19 @@ body {
       <div class="footer-title">備註與條款：</div>
       <textarea class="footer-ta" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認"></textarea>
     </div>
+  </div>
+
+  <!-- Payment Method -->
+  <div class="pay-section">
+    <div class="footer-title">收款方式：</div>
+    <div class="pay-opts">
+      <label><input type="checkbox" value="銀行轉帳"> 銀行轉帳</label>
+      <label><input type="checkbox" value="現金"> 現金</label>
+      <label><input type="checkbox" value="LINE Pay"> LINE Pay</label>
+      <label><input type="checkbox" value="信用卡"> 信用卡</label>
+      <label><input type="checkbox" value="支票"> 支票</label>
+    </div>
+    <input class="pay-detail" type="text" placeholder="補充說明（例：匯款帳號、到期日等）">
   </div>
 
 </div><!-- /page -->
