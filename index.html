@@ -606,28 +606,44 @@ function applyLogoUrl() {
   let url = document.getElementById('logoUrlInput').value.trim();
   if (!url) return;
 
-  // Auto-convert Google Drive share URL → direct image URL
+  // Extract Google Drive file ID and try formats in order
   const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) url = `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  if (m) {
+    tryLogoUrls([
+      `https://lh3.googleusercontent.com/d/${m[1]}`,
+      `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`,
+      `https://drive.google.com/uc?export=view&id=${m[1]}`,
+    ]);
+    return;
+  }
+  tryLogoUrls([url]);
+}
 
+function tryLogoUrls(urls) {
   const img  = document.getElementById('logoImg');
   const hint = document.querySelector('.logo-hint');
   const wrap = document.getElementById('logoUrlWrap');
+  let idx = 0;
 
-  img.onerror = () => {
-    alert('無法載入圖片。\n請確認：\n1. Google Drive 已設為「任何人可檢視」\n2. 網址正確');
-    img.onerror = null;
-    img.style.display = 'none';
-  };
-  img.onload = () => {
-    wrap.style.display = 'none';
-    hint.style.display = 'none';
-    img.onerror = null;
-    img.onload  = null;
-    scheduleDraftSave();
-  };
-  img.src = url;
-  img.style.display = 'block';
+  function tryNext() {
+    if (idx >= urls.length) {
+      alert('無法載入圖片，請確認：\n1. Google Drive 已設為「任何人可檢視」\n2. 試著直接用瀏覽器打開連結確認可存取');
+      img.style.display = 'none';
+      img.src = '';
+      return;
+    }
+    img.onerror = () => { idx++; tryNext(); };
+    img.onload  = () => {
+      img.onerror = null;
+      img.onload  = null;
+      wrap.style.display = 'none';
+      hint.style.display = 'none';
+      scheduleDraftSave();
+    };
+    img.src = urls[idx];
+    img.style.display = 'block';
+  }
+  tryNext();
 }
 
 function autoResize(el) {
