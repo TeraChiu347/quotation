@@ -211,33 +211,22 @@ body {
   border: 1px solid #999;
   padding: 8px 10px;
 }
-.pay-opts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin: 6px 0 8px;
-}
-.pay-opts label {
-  display: flex;
+.bank-grid { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.bank-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 60px 1fr;
+  gap: 6px;
   align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
 }
-.pay-opts input[type=checkbox] { width: 14px; height: 14px; accent-color: #2c3e50; cursor: pointer; }
-.pay-detail {
-  width: 100%;
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  outline: none;
-  font-size: 12px;
-  padding-top: 6px;
-  margin-top: 2px;
-  font-family: inherit;
-  background: transparent;
-  color: #333;
+.bank-row:last-child { border-bottom: none; padding-bottom: 0; }
+.bank-label { font-size: 12px; color: #555; white-space: nowrap; }
+.bank-input {
+  border: none; outline: none; font-family: inherit; font-size: 13px;
+  background: transparent; color: #333; width: 100%;
 }
-.pay-detail::placeholder { color: #ccc; }
+.bank-input::placeholder { color: #ccc; }
 
 /* ── Print ── */
 @media print {
@@ -255,11 +244,7 @@ body {
   .cell-input,
   .spec-ta,
   .footer-ta,
-  .pay-detail {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .pay-opts input[type=checkbox] {
+  .bank-input {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -322,8 +307,10 @@ body {
     </div>
     <div class="col-half">
       <div class="info-row"><span class="info-label">客戶公司：</span><input class="info-input" placeholder="（請填入客戶公司）"></div>
-      <div class="info-row"><span class="info-label">電話：</span><input class="info-input" placeholder="（請填入客戶電話）"></div>
+      <div class="info-row"><span class="info-label">發票抬頭：</span><input class="info-input" placeholder="（如與公司名稱不同請填）"></div>
+      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" placeholder="（請填入統編）"></div>
       <div class="info-row"><span class="info-label">聯絡人：</span><input class="info-input" placeholder="（請填入聯絡人）"></div>
+      <div class="info-row"><span class="info-label">電話：</span><input class="info-input" placeholder="（請填入客戶電話）"></div>
       <div class="info-row"><span class="info-label">Email：</span><input class="info-input" placeholder="（請填入 Email）"></div>
     </div>
   </div>
@@ -379,15 +366,21 @@ body {
 
   <!-- Payment Method -->
   <div class="pay-section">
-    <div class="footer-title">收款方式：</div>
-    <div class="pay-opts">
-      <label><input type="checkbox" value="銀行轉帳"> 銀行轉帳</label>
-      <label><input type="checkbox" value="現金"> 現金</label>
-      <label><input type="checkbox" value="LINE Pay"> LINE Pay</label>
-      <label><input type="checkbox" value="信用卡"> 信用卡</label>
-      <label><input type="checkbox" value="支票"> 支票</label>
+    <div class="footer-title">收款銀行資訊：</div>
+    <div class="bank-grid">
+      <div class="bank-row">
+        <span class="bank-label">銀行名稱</span>
+        <input class="bank-input" placeholder="例：玉山銀行">
+        <span class="bank-label">銀行代碼</span>
+        <input class="bank-input" placeholder="例：808">
+      </div>
+      <div class="bank-row">
+        <span class="bank-label">戶　　名</span>
+        <input class="bank-input" placeholder="帳戶戶名">
+        <span class="bank-label">帳　　號</span>
+        <input class="bank-input" placeholder="帳號">
+      </div>
     </div>
-    <input class="pay-detail" type="text" placeholder="補充說明（例：匯款帳號、到期日等）">
   </div>
 
 </div><!-- /page -->
