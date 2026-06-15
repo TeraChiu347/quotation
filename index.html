@@ -19,11 +19,12 @@ body {
   background: #2c3e50;
   padding: 10px 24px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .toolbar button {
-  padding: 7px 16px;
+  padding: 7px 14px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -31,9 +32,17 @@ body {
   font-family: inherit;
   font-weight: bold;
 }
-.btn-print  { background: #27ae60; color: #fff; }
-.btn-reset  { background: #e74c3c; color: #fff; }
-.hint { color: #888; font-size: 11px; margin-left: auto; }
+.btn-print   { background: #27ae60; color: #fff; }
+.btn-save    { background: #3498db; color: #fff; }
+.btn-hist    { background: #8e44ad; color: #fff; }
+.btn-company { background: #e67e22; color: #fff; }
+.btn-reset   { background: #e74c3c; color: #fff; }
+.save-status {
+  color: #2ecc71; font-size: 11px;
+  opacity: 0; transition: opacity .5s;
+  min-width: 130px;
+}
+.hint { color: #888; font-size: 11px; margin-left: auto; white-space: nowrap; }
 
 /* ── A4 Page ── */
 .page {
@@ -134,7 +143,6 @@ body {
 }
 .items-table td.no { width: 28px; text-align: center; color: #666; }
 .items-table td.name { width: 85px; }
-.items-table td.spec { }
 .items-table td.qty  { width: 42px; }
 .items-table td.unit { width: 35px; }
 .items-table td.price { width: 72px; }
@@ -205,7 +213,7 @@ body {
 }
 .footer-ta:focus { background: #f9f9f9; }
 
-/* ── Payment Method ── */
+/* ── Bank Info ── */
 .pay-section {
   margin-top: 12px;
   border: 1px solid #999;
@@ -228,29 +236,73 @@ body {
 }
 .bank-input::placeholder { color: #ccc; }
 
+/* ── History Panel ── */
+.h-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 200;
+}
+.h-panel {
+  position: fixed; top: 0; right: -400px;
+  width: 370px; max-width: 96vw;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -4px 0 24px rgba(0,0,0,.2);
+  z-index: 201;
+  transition: right .25s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+}
+.h-panel.open { right: 0; }
+.h-header {
+  background: #2c3e50; color: #fff;
+  padding: 14px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: bold; font-size: 15px;
+  flex-shrink: 0;
+}
+.h-close {
+  background: none; border: none; color: #fff;
+  font-size: 22px; cursor: pointer; line-height: 1; padding: 0 4px;
+}
+.h-list { flex: 1; overflow-y: auto; padding: 10px; }
+.h-empty { color: #aaa; text-align: center; padding: 40px 20px; font-size: 14px; line-height: 2; }
+.h-item {
+  border: 1px solid #e0e0e0; border-radius: 6px;
+  padding: 10px 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+  transition: border-color .15s;
+}
+.h-item:hover { border-color: #8e44ad; }
+.h-info { flex: 1; cursor: pointer; min-width: 0; }
+.h-no { font-weight: bold; font-size: 14px; color: #2c3e50; }
+.h-client { color: #555; font-size: 13px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.h-meta { color: #aaa; font-size: 11px; margin-top: 3px; }
+.h-total { color: #e74c3c; font-weight: bold; }
+.h-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.h-actions button {
+  padding: 4px 10px; border: none; border-radius: 4px;
+  font-size: 12px; cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.h-btn-load { background: #3498db; color: #fff; }
+.h-btn-copy { background: #27ae60; color: #fff; }
+.h-btn-del  { background: #fdecea; color: #e74c3c; }
+.h-actions button:hover { filter: brightness(.9); }
+
 /* ── Print ── */
 @media print {
   body { background: #fff; }
-  .toolbar { display: none !important; }
+  .toolbar, .h-overlay, .h-panel { display: none !important; }
   .page { margin: 0; padding: 12mm 14mm; box-shadow: none; }
   .act { display: none !important; }
   .add-row-btn { display: none !important; }
   #logoArea { border-color: #999; cursor: default; }
   .logo-hint { display: none; }
   #logoImg { display: block !important; }
-
-  .info-input,
-  .meta-input,
-  .cell-input,
-  .spec-ta,
-  .footer-ta,
-  .bank-input {
+  .info-input, .meta-input, .cell-input, .spec-ta, .footer-ta, .bank-input {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .info-input:focus,
-  .cell-input:focus,
-  .spec-ta:focus { background: transparent; }
 }
 @page { size: A4; margin: 0; }
 </style>
@@ -259,9 +311,25 @@ body {
 
 <!-- Toolbar -->
 <div class="toolbar">
-  <button class="btn-print" onclick="window.print()">🖨 列印 / 匯出 PDF</button>
-  <button class="btn-reset" onclick="resetForm()">↺ 清除重填</button>
+  <button class="btn-print"   onclick="window.print()">🖨 列印 / PDF</button>
+  <button class="btn-save"    onclick="saveToHistory()">💾 儲存報價</button>
+  <button class="btn-hist"    onclick="openHistoryPanel()">📋 歷史紀錄</button>
+  <button class="btn-company" onclick="saveCompany()">🏢 記住公司資訊</button>
+  <button class="btn-reset"   onclick="resetForm()">↺ 清除重填</button>
+  <span class="save-status" id="saveStatus"></span>
   <span class="hint">點擊左上角 LOGO 區域可上傳圖片</span>
+</div>
+
+<!-- History Overlay -->
+<div class="h-overlay" id="histOverlay" onclick="closeHistoryPanel()"></div>
+
+<!-- History Panel -->
+<div class="h-panel" id="histPanel">
+  <div class="h-header">
+    <span>歷史報價紀錄</span>
+    <button class="h-close" onclick="closeHistoryPanel()">×</button>
+  </div>
+  <div class="h-list" id="histList"></div>
 </div>
 
 <!-- A4 Page -->
@@ -301,17 +369,17 @@ body {
   <div class="info-section">
     <div class="col-half">
       <div class="info-row"><span class="info-label">公司名稱：</span><input class="info-input" id="companyName" placeholder="（請填入公司名稱）"></div>
-      <div class="info-row"><span class="info-label">聯絡地址：</span><input class="info-input" placeholder="（請填入地址）"></div>
-      <div class="info-row"><span class="info-label">電話 / Email：</span><input class="info-input" placeholder="（請填入電話 / Email）"></div>
-      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" placeholder="（請填入統編）"></div>
+      <div class="info-row"><span class="info-label">聯絡地址：</span><input class="info-input" id="companyAddr" placeholder="（請填入地址）"></div>
+      <div class="info-row"><span class="info-label">電話 / Email：</span><input class="info-input" id="companyPhone" placeholder="（請填入電話 / Email）"></div>
+      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" id="companyTaxId" placeholder="（請填入統編）"></div>
     </div>
     <div class="col-half">
-      <div class="info-row"><span class="info-label">客戶公司：</span><input class="info-input" placeholder="（請填入客戶公司）"></div>
-      <div class="info-row"><span class="info-label">發票抬頭：</span><input class="info-input" placeholder="（如與公司名稱不同請填）"></div>
-      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" placeholder="（請填入統編）"></div>
-      <div class="info-row"><span class="info-label">聯絡人：</span><input class="info-input" placeholder="（請填入聯絡人）"></div>
-      <div class="info-row"><span class="info-label">電話：</span><input class="info-input" placeholder="（請填入客戶電話）"></div>
-      <div class="info-row"><span class="info-label">Email：</span><input class="info-input" placeholder="（請填入 Email）"></div>
+      <div class="info-row"><span class="info-label">客戶公司：</span><input class="info-input" id="clientCompany" placeholder="（請填入客戶公司）"></div>
+      <div class="info-row"><span class="info-label">發票抬頭：</span><input class="info-input" id="clientInvoice" placeholder="（如與公司名稱不同請填）"></div>
+      <div class="info-row"><span class="info-label">統一編號：</span><input class="info-input" id="clientTaxId" placeholder="（請填入統編）"></div>
+      <div class="info-row"><span class="info-label">聯絡人：</span><input class="info-input" id="clientContact" placeholder="（請填入聯絡人）"></div>
+      <div class="info-row"><span class="info-label">電話：</span><input class="info-input" id="clientPhone" placeholder="（請填入客戶電話）"></div>
+      <div class="info-row"><span class="info-label">Email：</span><input class="info-input" id="clientEmail" placeholder="（請填入 Email）"></div>
     </div>
   </div>
 
@@ -337,18 +405,9 @@ body {
   <!-- Summary -->
   <div class="summary-wrap">
     <table class="summary-table">
-      <tr>
-        <td>未稅小計</td>
-        <td id="subtotalDisplay">0</td>
-      </tr>
-      <tr>
-        <td>營業稅 5%</td>
-        <td id="taxDisplay">0</td>
-      </tr>
-      <tr class="total-row">
-        <td>總計金額（含稅）</td>
-        <td class="total-amount" id="totalDisplay">0</td>
-      </tr>
+      <tr><td>未稅小計</td><td id="subtotalDisplay">0</td></tr>
+      <tr><td>營業稅 5%</td><td id="taxDisplay">0</td></tr>
+      <tr class="total-row"><td>總計金額（含稅）</td><td class="total-amount" id="totalDisplay">0</td></tr>
     </table>
   </div>
 
@@ -356,29 +415,29 @@ body {
   <div class="footer-section">
     <div class="footer-box">
       <div class="footer-title">付款條件：</div>
-      <textarea class="footer-ta" placeholder="例：&#10;1. 簽約後預付總金額 30% 作為訂金&#10;2. 專案完成並驗收後 7 日內支付尾款"></textarea>
+      <textarea class="footer-ta" id="paymentTa" placeholder="例：&#10;1. 簽約後預付總金額 30% 作為訂金&#10;2. 專案完成並驗收後 7 日內支付尾款"></textarea>
     </div>
     <div class="footer-box">
       <div class="footer-title">備註與條款：</div>
-      <textarea class="footer-ta" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認"></textarea>
+      <textarea class="footer-ta" id="notesTa" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認"></textarea>
     </div>
   </div>
 
-  <!-- Payment Method -->
+  <!-- Bank Info -->
   <div class="pay-section">
     <div class="footer-title">收款銀行資訊：</div>
     <div class="bank-grid">
       <div class="bank-row">
         <span class="bank-label">銀行名稱</span>
-        <input class="bank-input" placeholder="例：玉山銀行">
+        <input class="bank-input" id="bankName" placeholder="例：玉山銀行">
         <span class="bank-label">銀行代碼</span>
-        <input class="bank-input" placeholder="例：808">
+        <input class="bank-input" id="bankCode" placeholder="例：808">
       </div>
       <div class="bank-row">
         <span class="bank-label">戶　　名</span>
-        <input class="bank-input" placeholder="帳戶戶名">
+        <input class="bank-input" id="bankHolder" placeholder="帳戶戶名">
         <span class="bank-label">帳　　號</span>
-        <input class="bank-input" placeholder="帳號">
+        <input class="bank-input" id="bankAccount" placeholder="帳號">
       </div>
     </div>
   </div>
@@ -387,38 +446,56 @@ body {
 
 <script>
 let rowId = 0;
+let autoSaveTimer = null;
+let statusTimer   = null;
 
+const LS_DRAFT   = 'qd_draft';
+const LS_HISTORY = 'qd_history';
+const LS_COMPANY = 'qd_company';
+
+// ── Init ─────────────────────────────────────────────────────────────────────
 function init() {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
-  document.getElementById('quoteDate').value = `${y}-${m}-${d}`;
-  document.getElementById('quoteNo').value = `${y}${m}${d}-001`;
-  calcExpiry();
-  addRow(); addRow(); addRow();
+  const draft = getDraft();
+  if (draft) {
+    fillForm(draft);
+    showStatus('已還原上次草稿');
+  } else {
+    loadCompany();
+    const today = todayStr();
+    document.getElementById('quoteDate').value = today;
+    document.getElementById('quoteNo').value   = today.replace(/-/g, '') + '-001';
+    calcExpiry();
+    addRow(); addRow(); addRow();
+  }
+  document.addEventListener('input',  scheduleDraftSave);
+  document.addEventListener('change', scheduleDraftSave);
 }
 
+function todayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+
+// ── Expiry ────────────────────────────────────────────────────────────────────
 function calcExpiry() {
-  const val = document.getElementById('quoteDate').value;
+  const val  = document.getElementById('quoteDate').value;
   const days = parseInt(document.getElementById('validDays').value) || 0;
-  const el = document.getElementById('expiryDate');
+  const el   = document.getElementById('expiryDate');
   if (!val) { el.textContent = '—'; return; }
   const d = new Date(val);
   d.setDate(d.getDate() + days);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  el.textContent = `${y}/${m}/${dd}`;
+  el.textContent = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// ── Row Management ────────────────────────────────────────────────────────────
 function addRow() {
   rowId++;
   const id = rowId;
+  const n  = document.querySelectorAll('#itemsBody tr').length + 1;
   const tr = document.createElement('tr');
   tr.id = `row-${id}`;
   tr.innerHTML = `
-    <td class="no num-cell">${document.querySelectorAll('#itemsBody tr').length + 1}</td>
+    <td class="no num-cell">${n}</td>
     <td class="name"><input class="cell-input" placeholder="品名"></td>
     <td class="spec"><textarea class="spec-ta" rows="2" placeholder="規格說明（支援多行）" oninput="autoResize(this)"></textarea></td>
     <td class="qty"><input class="cell-input right" id="qty-${id}" type="number" value="1" min="0" oninput="calcRow(${id})"></td>
@@ -430,6 +507,7 @@ function addRow() {
   `;
   document.getElementById('itemsBody').appendChild(tr);
   calcTotal();
+  return id;
 }
 
 function calcRow(id) {
@@ -437,19 +515,17 @@ function calcRow(id) {
   const priceEl = document.getElementById(`price-${id}`);
   const subEl   = document.getElementById(`sub-${id}`);
   if (!qtyEl || !priceEl || !subEl) return;
-
-  const qty   = parseFloat(qtyEl.value) || 0;
-  const rawP  = priceEl.value.trim();
+  const qty    = parseFloat(qtyEl.value) || 0;
+  const rawP   = priceEl.value.trim();
   const isGift = rawP === '贈送' || rawP === '贈';
-
   if (isGift) {
     subEl.textContent = '贈送';
     subEl.dataset.val = '0';
   } else {
     const price = parseFloat(rawP.replace(/,/g, '')) || 0;
     const sub   = qty * price;
-    subEl.textContent  = sub > 0 ? sub.toLocaleString() : (rawP === '' ? '' : '0');
-    subEl.dataset.val  = String(sub);
+    subEl.textContent = sub > 0 ? sub.toLocaleString() : (rawP === '' ? '' : '0');
+    subEl.dataset.val = String(sub);
   }
   calcTotal();
 }
@@ -480,16 +556,18 @@ function renumber() {
   });
 }
 
+// ── Logo ──────────────────────────────────────────────────────────────────────
 function uploadLogo(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const img = document.getElementById('logoImg');
+    const img  = document.getElementById('logoImg');
     const hint = document.querySelector('.logo-hint');
     img.src = e.target.result;
     img.style.display = 'block';
     if (hint) hint.style.display = 'none';
+    scheduleDraftSave();
   };
   reader.readAsDataURL(file);
 }
@@ -499,8 +577,271 @@ function autoResize(el) {
   el.style.height = el.scrollHeight + 'px';
 }
 
+// ── Collect / Fill Form ───────────────────────────────────────────────────────
+function collectForm() {
+  const logoImg = document.getElementById('logoImg');
+  const items = [];
+  document.querySelectorAll('#itemsBody tr').forEach(tr => {
+    items.push({
+      name:   (tr.querySelector('td.name input')       || {}).value || '',
+      spec:   (tr.querySelector('td.spec textarea')    || {}).value || '',
+      qty:    (tr.querySelector('td.qty input')        || {}).value || '1',
+      unit:   (tr.querySelector('td.unit input')       || {}).value || '式',
+      price:  (tr.querySelector('td.price input')      || {}).value || '',
+      remark: (tr.querySelector('td.remark textarea')  || {}).value || '',
+    });
+  });
+  const g = id => (document.getElementById(id) || {}).value || '';
+  return {
+    no:            g('quoteNo'),
+    date:          g('quoteDate'),
+    validDays:     g('validDays'),
+    companyName:   g('companyName'),
+    companyAddr:   g('companyAddr'),
+    companyPhone:  g('companyPhone'),
+    companyTaxId:  g('companyTaxId'),
+    clientCompany: g('clientCompany'),
+    clientInvoice: g('clientInvoice'),
+    clientTaxId:   g('clientTaxId'),
+    clientContact: g('clientContact'),
+    clientPhone:   g('clientPhone'),
+    clientEmail:   g('clientEmail'),
+    payment:       g('paymentTa'),
+    notes:         g('notesTa'),
+    bankName:      g('bankName'),
+    bankCode:      g('bankCode'),
+    bankHolder:    g('bankHolder'),
+    bankAccount:   g('bankAccount'),
+    logo: (logoImg.src && logoImg.style.display !== 'none') ? logoImg.src : '',
+    items,
+    total:   parseInt((document.getElementById('totalDisplay') || {}).textContent?.replace(/,/g,'')) || 0,
+    savedAt: new Date().toISOString(),
+  };
+}
+
+function fillForm(data) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+  set('quoteNo',       data.no);
+  set('quoteDate',     data.date);
+  set('validDays',     data.validDays || 7);
+  set('companyName',   data.companyName);
+  set('companyAddr',   data.companyAddr);
+  set('companyPhone',  data.companyPhone);
+  set('companyTaxId',  data.companyTaxId);
+  set('clientCompany', data.clientCompany);
+  set('clientInvoice', data.clientInvoice);
+  set('clientTaxId',   data.clientTaxId);
+  set('clientContact', data.clientContact);
+  set('clientPhone',   data.clientPhone);
+  set('clientEmail',   data.clientEmail);
+  set('paymentTa',     data.payment);
+  set('notesTa',       data.notes);
+  set('bankName',      data.bankName);
+  set('bankCode',      data.bankCode);
+  set('bankHolder',    data.bankHolder);
+  set('bankAccount',   data.bankAccount);
+
+  if (data.logo) {
+    const img  = document.getElementById('logoImg');
+    const hint = document.querySelector('.logo-hint');
+    img.src = data.logo;
+    img.style.display = 'block';
+    if (hint) hint.style.display = 'none';
+  }
+
+  document.getElementById('itemsBody').innerHTML = '';
+  rowId = 0;
+  const items = (data.items && data.items.length) ? data.items : [{},{},{}];
+  items.forEach(item => {
+    const id = addRow();
+    const tr = document.getElementById(`row-${id}`);
+    if (!tr) return;
+    const q = (sel, val) => { const el = tr.querySelector(sel); if (el) el.value = val || ''; };
+    q('td.name input',      item.name);
+    q('td.spec textarea',   item.spec);
+    q('td.qty input',       item.qty  ?? 1);
+    q('td.unit input',      item.unit || '式');
+    q('td.price input',     item.price);
+    q('td.remark textarea', item.remark);
+    calcRow(id);
+    tr.querySelectorAll('.spec-ta').forEach(ta => autoResize(ta));
+  });
+
+  calcExpiry();
+}
+
+// ── Draft (Auto-Save) ─────────────────────────────────────────────────────────
+function scheduleDraftSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    const data = collectForm();
+    const ok   = tryStore(LS_DRAFT, data);
+    if (ok) showStatus('已自動儲存草稿');
+  }, 1200);
+}
+
+function getDraft() {
+  try { return JSON.parse(localStorage.getItem(LS_DRAFT)); } catch(e) { return null; }
+}
+function clearDraft() { localStorage.removeItem(LS_DRAFT); }
+
+// ── History ───────────────────────────────────────────────────────────────────
+function saveToHistory() {
+  const data = collectForm();
+  if (!data.no && !data.clientCompany && data.items.every(i => !i.name)) {
+    alert('請先填入報價編號或客戶資訊！'); return;
+  }
+  let hist = getHistory();
+  const idx = data.no ? hist.findIndex(h => h.no === data.no) : -1;
+  if (idx >= 0) {
+    if (!confirm(`報價「${data.no}」已存在，要覆蓋更新嗎？`)) return;
+    hist[idx] = data;
+  } else {
+    hist.unshift(data);
+  }
+  const ok = tryStore(LS_HISTORY, hist);
+  if (ok === false)    { alert('儲存失敗，請清除部分舊紀錄後再試'); return; }
+  if (ok === 'nologo') showStatus('已儲存（圖片未存入）✓');
+  else                 showStatus('已儲存到歷史紀錄 ✓');
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'); } catch(e) { return []; }
+}
+
+function tryStore(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); return true; }
+  catch(e) {
+    const slim = Array.isArray(data)
+      ? data.map(d => ({...d, logo:''}))
+      : {...data, logo:''};
+    try { localStorage.setItem(key, JSON.stringify(slim)); return 'nologo'; }
+    catch(e2) { return false; }
+  }
+}
+
+function loadQuote(no) {
+  const data = getHistory().find(h => h.no === no);
+  if (!data) return;
+  if (!confirm(`載入報價「${no}」？目前填寫的內容會被取代。`)) return;
+  fillForm(data);
+  closeHistoryPanel();
+  showStatus('已載入 ' + no);
+}
+
+function copyQuote(no) {
+  const data = getHistory().find(h => h.no === no);
+  if (!data) return;
+  const copy   = JSON.parse(JSON.stringify(data));
+  const t      = new Date();
+  copy.no      = `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*900)+100)}`;
+  copy.date    = todayStr();
+  copy.savedAt = new Date().toISOString();
+  fillForm(copy);
+  closeHistoryPanel();
+  showStatus('已複製為 ' + copy.no);
+}
+
+function deleteHistory(no) {
+  if (!confirm(`確定刪除報價「${no}」？`)) return;
+  const hist = getHistory().filter(h => h.no !== no);
+  localStorage.setItem(LS_HISTORY, JSON.stringify(hist));
+  renderHistoryPanel();
+  showStatus('已刪除 ' + no);
+}
+
+// ── History Panel ─────────────────────────────────────────────────────────────
+function openHistoryPanel() {
+  renderHistoryPanel();
+  document.getElementById('histPanel').classList.add('open');
+  document.getElementById('histOverlay').style.display = 'block';
+}
+
+function closeHistoryPanel() {
+  document.getElementById('histPanel').classList.remove('open');
+  document.getElementById('histOverlay').style.display = 'none';
+}
+
+function renderHistoryPanel() {
+  const hist = getHistory();
+  const list = document.getElementById('histList');
+  if (!hist.length) {
+    list.innerHTML = '<div class="h-empty">尚無儲存的報價紀錄<br><small>填好報價後按「💾 儲存報價」</small></div>';
+    return;
+  }
+  list.innerHTML = hist.map(h => {
+    const d    = h.savedAt ? new Date(h.savedAt) : null;
+    const date = d ? `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}` : '';
+    const tot  = h.total ? `NT$${Number(h.total).toLocaleString()}` : '';
+    const no   = JSON.stringify(h.no || '');
+    const cmp  = esc(h.clientCompany || '（未填客戶）');
+    return `
+      <div class="h-item">
+        <div class="h-info" onclick="loadQuote(${no})">
+          <div class="h-no">${esc(h.no || '（無編號）')}</div>
+          <div class="h-client">${cmp}</div>
+          <div class="h-meta">${date}${tot ? ' &nbsp;·&nbsp; <span class="h-total">'+tot+'</span>' : ''}</div>
+        </div>
+        <div class="h-actions">
+          <button class="h-btn-load" onclick="loadQuote(${no})">載入</button>
+          <button class="h-btn-copy" onclick="copyQuote(${no})">複製</button>
+          <button class="h-btn-del"  onclick="deleteHistory(${no})">刪除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Company Info ──────────────────────────────────────────────────────────────
+function saveCompany() {
+  const g = id => (document.getElementById(id) || {}).value || '';
+  const data = {
+    companyName:  g('companyName'),
+    companyAddr:  g('companyAddr'),
+    companyPhone: g('companyPhone'),
+    companyTaxId: g('companyTaxId'),
+    bankName:     g('bankName'),
+    bankCode:     g('bankCode'),
+    bankHolder:   g('bankHolder'),
+    bankAccount:  g('bankAccount'),
+  };
+  localStorage.setItem(LS_COMPANY, JSON.stringify(data));
+  showStatus('公司資訊已記住 ✓');
+}
+
+function loadCompany() {
+  try {
+    const data = JSON.parse(localStorage.getItem(LS_COMPANY));
+    if (!data) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    set('companyName',  data.companyName);
+    set('companyAddr',  data.companyAddr);
+    set('companyPhone', data.companyPhone);
+    set('companyTaxId', data.companyTaxId);
+    set('bankName',     data.bankName);
+    set('bankCode',     data.bankCode);
+    set('bankHolder',   data.bankHolder);
+    set('bankAccount',  data.bankAccount);
+  } catch(e) {}
+}
+
+// ── Status Message ────────────────────────────────────────────────────────────
+function showStatus(msg) {
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = 1;
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => { el.style.opacity = 0; }, 2800);
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
 function resetForm() {
   if (!confirm('確定要清除所有內容並重新填寫嗎？')) return;
+  clearDraft();
   location.reload();
 }
 
