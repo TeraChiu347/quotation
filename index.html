@@ -337,9 +337,29 @@ body {
 
   <!-- Header -->
   <div class="header">
-    <div id="logoArea" onclick="document.getElementById('logoInput').click()" title="點擊上傳 LOGO">
-      <img id="logoImg" alt="公司LOGO">
-      <div class="logo-hint"><strong>公司 LOGO</strong><small>點擊上傳圖片</small></div>
+    <div id="logoArea" title="點擊上傳 LOGO">
+      <img id="logoImg" alt="公司LOGO" onclick="document.getElementById('logoInput').click()" style="cursor:pointer">
+      <div class="logo-hint" onclick="document.getElementById('logoInput').click()">
+        <strong>公司 LOGO</strong>
+        <small>點擊上傳圖片</small>
+        <small style="display:block;margin-top:5px">或 <a href="#" onclick="event.stopPropagation();toggleLogoUrl(event)" style="color:#3498db;text-decoration:none">貼上圖片網址</a></small>
+      </div>
+      <div id="logoUrlWrap" style="display:none;padding:10px;width:100%">
+        <input id="logoUrlInput" type="url"
+               placeholder="貼上圖片網址"
+               style="width:100%;border:1px solid #ccc;border-radius:3px;padding:5px 7px;font-size:12px;font-family:inherit"
+               onkeydown="if(event.key==='Enter')applyLogoUrl()">
+        <button onclick="applyLogoUrl()"
+                style="margin-top:5px;width:100%;padding:4px;background:#3498db;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;font-family:inherit">
+          載入圖片
+        </button>
+        <div style="margin-top:5px;font-size:10px;color:#aaa;line-height:1.6">
+          Google Drive：先設為「任何人可檢視」，<br>
+          貼分享連結即可自動轉換。
+        </div>
+        <a href="#" onclick="event.preventDefault();toggleLogoUrl(event)"
+           style="display:block;margin-top:4px;font-size:11px;color:#aaa;text-align:center">取消</a>
+      </div>
     </div>
     <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="uploadLogo(this)">
 
@@ -570,6 +590,44 @@ function uploadLogo(input) {
     scheduleDraftSave();
   };
   reader.readAsDataURL(file);
+}
+
+function toggleLogoUrl(e) {
+  if (e) e.preventDefault();
+  const wrap = document.getElementById('logoUrlWrap');
+  const hint = document.querySelector('.logo-hint');
+  const isHidden = wrap.style.display === 'none';
+  wrap.style.display = isHidden ? 'block' : 'none';
+  hint.style.display = isHidden ? 'none'  : 'block';
+  if (isHidden) document.getElementById('logoUrlInput').focus();
+}
+
+function applyLogoUrl() {
+  let url = document.getElementById('logoUrlInput').value.trim();
+  if (!url) return;
+
+  // Auto-convert Google Drive share URL → direct image URL
+  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) url = `https://drive.google.com/uc?export=view&id=${m[1]}`;
+
+  const img  = document.getElementById('logoImg');
+  const hint = document.querySelector('.logo-hint');
+  const wrap = document.getElementById('logoUrlWrap');
+
+  img.onerror = () => {
+    alert('無法載入圖片。\n請確認：\n1. Google Drive 已設為「任何人可檢視」\n2. 網址正確');
+    img.onerror = null;
+    img.style.display = 'none';
+  };
+  img.onload = () => {
+    wrap.style.display = 'none';
+    hint.style.display = 'none';
+    img.onerror = null;
+    img.onload  = null;
+    scheduleDraftSave();
+  };
+  img.src = url;
+  img.style.display = 'block';
 }
 
 function autoResize(el) {
