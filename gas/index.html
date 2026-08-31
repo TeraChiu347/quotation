@@ -34,6 +34,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .view{flex:1;overflow-y:auto;display:none;flex-direction:column;
   padding-bottom:var(--nav-h);}
 .view.active{display:flex;}
+.vbody{flex:1;overflow-y:auto;padding-bottom:16px;}
 
 /* ── Header ── */
 .vhdr{height:var(--hdr-h);background:var(--primary);color:#fff;
@@ -76,13 +77,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .qbtn:not(:last-child){border-right:1px solid var(--border);}
 .qbtn:active{background:var(--bg);}
 .qbtn.red{color:var(--danger);}
-
-/* ── FAB ── */
-.fab{position:fixed;bottom:calc(var(--nav-h)+16px);right:18px;
-  width:56px;height:56px;border-radius:50%;background:var(--primary);
-  color:#fff;border:none;cursor:pointer;font-size:28px;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 16px rgba(37,99,235,.4);z-index:40;}
 
 /* ── Form ── */
 .fs{background:#fff;margin-bottom:10px;}
@@ -267,6 +261,30 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
   .p-info{flex-direction:column;gap:0;}
   .p-ic{width:100%;}
 }
+
+/* ── Desktop / Wide Screen ── */
+@media(min-width:900px){
+  #app{flex-direction:row;}
+  .bnav{position:static;width:92px;height:auto;flex-direction:column;
+    border-top:none;border-right:1px solid var(--border);
+    order:-1;flex-shrink:0;padding:20px 0;gap:8px;}
+  .nb{flex:none;padding:14px 0;gap:6px;}
+  .nb svg{width:24px;height:24px;}
+  .view{padding-bottom:0;}
+  .vhdr{padding:0 32px;max-width:1100px;margin:0 auto;width:100%;}
+
+  .ca{max-width:1100px;margin:0 auto;width:100%;padding:24px 32px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:14px;align-content:start;}
+  .ca .empty{grid-column:1/-1;}
+  .qc{margin-bottom:0;}
+
+  .vbody{max-width:760px;margin:0 auto;width:100%;padding:24px 32px 16px;}
+
+  .mbk:not(.ctr){align-items:center;justify-content:center;}
+  .mbk:not(.ctr) .msh{border-radius:var(--r);width:90%;max-width:520px;
+    max-height:80vh;}
+}
 </style>
 </head>
 <body>
@@ -276,11 +294,11 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
 
   <!-- ── Home ── -->
   <div id="view-home" class="view">
-    <div class="vhdr"><h1 id="home-title">報價單系統</h1></div>
+    <div class="vhdr"><h1 id="home-title">報價單系統</h1>
+      <button class="ic-btn" onclick="newQuote()" title="新增報價單">＋</button></div>
     <div class="ca" id="home-list">
-      <div class="empty"><div class="empty-ico">📄</div>還沒有報價單，點 ＋ 新增</div>
+      <div class="empty"><div class="empty-ico">📄</div>還沒有報價單，點右上角 ＋ 新增</div>
     </div>
-    <button class="fab" onclick="newQuote()">＋</button>
   </div>
 
   <!-- ── History ── -->
@@ -296,7 +314,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
       <h1 id="edit-title">新增報價單</h1>
       <button class="ic-btn" onclick="saveAndPreview()" title="預覽列印">👁</button>
     </div>
-    <div style="flex:1;overflow-y:auto;padding-bottom:16px;">
+    <div class="vbody">
 
       <!-- Logo -->
       <div class="fs">
@@ -364,7 +382,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
   <!-- ── Settings ── -->
   <div id="view-settings" class="view">
     <div class="vhdr"><h1>設定</h1></div>
-    <div style="flex:1;overflow-y:auto;padding-bottom:16px;">
+    <div class="vbody">
       <div class="fs" style="margin-top:12px;">
         <div class="fst">公司資訊</div>
         <div class="fr"><span class="fl">公司名稱</span><input class="fi" id="cfg-name" placeholder="請填入公司名稱"></div>
@@ -378,6 +396,13 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
         <div class="fr"><span class="fl">LOGO 1 網址</span><input class="fi" id="cfg-l1u" type="url" placeholder="https://..."></div>
         <div class="fr"><span class="fl">LOGO 2 名稱</span><input class="fi" id="cfg-l2n" placeholder="LOGO 2"></div>
         <div class="fr"><span class="fl">LOGO 2 網址</span><input class="fi" id="cfg-l2u" type="url" placeholder="https://..."></div>
+      </div>
+      <div class="fs">
+        <div class="fst">收款銀行資訊</div>
+        <div class="fr"><span class="fl">銀行名稱</span><input class="fi" id="cfg-bname" placeholder="例：玉山銀行"></div>
+        <div class="fr"><span class="fl">銀行代碼</span><input class="fi" id="cfg-bcode" placeholder="例：808"></div>
+        <div class="fr"><span class="fl">戶　　名</span><input class="fi" id="cfg-bholder" placeholder="帳戶戶名"></div>
+        <div class="fr"><span class="fl">帳　　號</span><input class="fi" id="cfg-baccount" placeholder="帳號"></div>
       </div>
       <div style="padding:0 14px 8px;"><button class="bpri" onclick="saveSettings()">儲存設定</button></div>
       <div class="fs">
@@ -480,6 +505,19 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
     <div class="mfoot">
       <button class="mcancel" onclick="cm('m-tform')">取消</button>
       <button class="mok" onclick="submitTF()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: After-Save Actions -->
+<div class="mbk ctr" id="m-aftsave">
+  <div class="mdlg">
+    <div class="mhdr"><span class="mtitle">報價單已儲存</span>
+      <button class="mclose" onclick="cm('m-aftsave')">×</button></div>
+    <div id="aftsave-body" style="padding:4px 0;max-height:60vh;overflow-y:auto;"></div>
+    <div class="mfoot">
+      <button class="mcancel" onclick="cm('m-aftsave')">略過</button>
+      <button class="mok" onclick="submitAftSave()">確定儲存</button>
     </div>
   </div>
 </div>
@@ -598,7 +636,7 @@ function renderLogoSel(sel) {
   ];
   document.getElementById('logo-sel').innerHTML = logos.map(l=>`
     <div class="logo-opt ${sel===l.n?'sel':''}" onclick="selLogo(${l.n})">
-      ${l.url?`<img src="${l.url}" onerror="this.style.display='none'" alt="${e(l.name)}">`:''}
+      ${l.url?`<img src="${driveUrl(l.url)}" onerror="this.style.display='none'" alt="${e(l.name)}">`:''}
       <div class="logo-opt-n">${e(l.name)}</div>
     </div>`).join('');
 }
@@ -688,6 +726,7 @@ function saveCurrentQuote() {
       document.getElementById('f-no').value=no;
       document.getElementById('edit-title').textContent='編輯 '+no;
       toast('報價單已儲存！');
+      promptSaveClient(q);
     })
     .withFailureHandler(()=>toast('儲存失敗，請重試'))
     .saveQuote(q);
@@ -704,9 +743,86 @@ function saveAndPreview() {
       if(idx>=0) S.quotes[idx]=saved; else S.quotes.unshift(saved);
       document.getElementById('f-no').value=no;
       showPrint(q);
+      promptSaveClient(q);
     })
     .withFailureHandler(()=>toast('儲存失敗'))
     .saveQuote(q);
+}
+
+function promptSaveClient(q) {
+  const needClient = !!(q.client && !S.clients.some(c => c.company === q.client));
+  const allTplNames = new Set(Object.values(S.templates).flatMap(arr => arr.map(i => i.name)));
+  const newItems = (q.items || []).filter(it => it.name && it.name.trim() && !allTplNames.has(it.name));
+
+  if (!needClient && !newItems.length) return;
+
+  let html = '';
+  if (needClient) {
+    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="afs-client" checked>
+        <div>
+          <div style="font-size:14px;font-weight:500">加入甲方名單</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">「${e(q.client)}」尚未在名單中</div>
+        </div>
+      </label>
+    </div>`;
+  }
+  if (newItems.length) {
+    html += `<div style="padding:10px 14px;">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">勾選要存入「常用項目」的項目：</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:13px;color:var(--muted);white-space:nowrap">類別</span>
+        <input class="fi" id="afs-cat" value="常用項目" style="flex:1;padding:4px 8px;font-size:13px;">
+      </div>
+      ${newItems.map((it,i)=>`
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:5px 0;border-top:1px solid var(--border)">
+          <input type="checkbox" class="afs-item" data-idx="${i}" checked style="margin-top:2px">
+          <div style="font-size:13px">
+            <div>${e(it.name)}</div>
+            ${it.spec?`<div style="color:var(--muted);font-size:12px">${e(it.spec)}</div>`:''}
+            <div style="color:var(--muted);font-size:12px">${it.qty||1} ${e(it.unit||'式')} × $${Number(it.price||0).toLocaleString()}</div>
+          </div>
+        </label>`).join('')}
+    </div>`;
+  }
+
+  document.getElementById('aftsave-body').innerHTML = html;
+  window._afsData = { q, needClient, newItems };
+  om('m-aftsave');
+}
+
+function submitAftSave() {
+  cm('m-aftsave');
+  const { q, needClient, newItems } = window._afsData || {};
+  if (!q) return;
+
+  const doClient = needClient && document.getElementById('afs-client')?.checked;
+  if (doClient) {
+    const client = { id:'', company:q.client, contact:q.contact||'', phone:q.phone||'', email:q.email||'' };
+    google.script.run
+      .withSuccessHandler(id=>{ client.id=id; S.clients.push(client); })
+      .withFailureHandler(()=>toast('甲方儲存失敗'))
+      .saveClient(client);
+  }
+
+  const cat = (document.getElementById('afs-cat')?.value||'').trim() || '常用項目';
+  const chosen = [...document.querySelectorAll('.afs-item:checked')].map(cb => newItems[+cb.dataset.idx]);
+  chosen.forEach(it => {
+    const item = { category:cat, name:it.name, spec:it.spec||'', unit:it.unit||'式', price:it.price||0 };
+    google.script.run
+      .withSuccessHandler(()=>{
+        if(!S.templates[cat]) S.templates[cat]=[];
+        if(!S.templates[cat].some(t=>t.name===item.name)) S.templates[cat].push(item);
+      })
+      .withFailureHandler(()=>{})
+      .saveTemplateItem(item);
+  });
+
+  const msgs = [];
+  if (doClient) msgs.push('甲方已加入名單');
+  if (chosen.length) msgs.push(`${chosen.length} 個常用項目已儲存`);
+  if (msgs.length) toast(msgs.join('、'));
 }
 
 function delQ(no) {
@@ -727,7 +843,7 @@ function prevQ(no){ const q=S.quotes.find(q=>q.no===no); if(q) showPrint(q); }
 
 function showPrint(q) {
   const cfg=S.config;
-  const lu=q.logo===2?cfg.LOGO_2_URL:cfg.LOGO_1_URL;
+  const lu=driveUrl(q.logo===2?cfg.LOGO_2_URL:cfg.LOGO_1_URL);
   let exp='—';
   if(q.rawDate||q.date){
     const b=new Date((q.rawDate||q.date).replace(/\//g,'-'));
@@ -790,7 +906,18 @@ function showPrint(q) {
         <div class="p-fbc">${e(q.payment||'')}</div></div>
       <div class="p-fb"><div class="p-fbt">備註與條款：</div>
         <div class="p-fbc">${e(q.notes||'')}</div></div>
-    </div>`;
+    </div>
+    ${(cfg.BANK_NAME||cfg.BANK_ACCOUNT)?`
+    <div style="margin-top:10px;border:1px solid #999;padding:8px 10px;">
+      <div class="p-fbt">收款銀行資訊：</div>
+      <div style="display:grid;grid-template-columns:60px 1fr 60px 1fr;gap:6px 8px;margin-top:6px;font-size:12px;">
+        <span style="color:#555">銀行名稱</span><span>${e(cfg.BANK_NAME||'')}</span>
+        <span style="color:#555">銀行代碼</span><span>${e(cfg.BANK_CODE||'')}</span>
+        <span style="color:#555">戶　　名</span><span>${e(cfg.BANK_HOLDER||'')}</span>
+        <span style="color:#555">帳　　號</span><span>${e(cfg.BANK_ACCOUNT||'')}</span>
+      </div>
+    </div>`:''}
+    `;
   document.getElementById('pmod').classList.add('open');
 }
 function cp() { document.getElementById('pmod').classList.remove('open'); }
@@ -945,10 +1072,14 @@ function renderSettings() {
   document.getElementById('cfg-addr').value =cfg.COMPANY_ADDRESS||'';
   document.getElementById('cfg-phone').value=cfg.COMPANY_PHONE||'';
   document.getElementById('cfg-tax').value  =cfg.COMPANY_TAX_ID||'';
-  document.getElementById('cfg-l1n').value  =cfg.LOGO_1_NAME||'LOGO 1';
-  document.getElementById('cfg-l1u').value  =cfg.LOGO_1_URL||'';
-  document.getElementById('cfg-l2n').value  =cfg.LOGO_2_NAME||'LOGO 2';
-  document.getElementById('cfg-l2u').value  =cfg.LOGO_2_URL||'';
+  document.getElementById('cfg-l1n').value    =cfg.LOGO_1_NAME||'LOGO 1';
+  document.getElementById('cfg-l1u').value    =cfg.LOGO_1_URL||'';
+  document.getElementById('cfg-l2n').value    =cfg.LOGO_2_NAME||'LOGO 2';
+  document.getElementById('cfg-l2u').value    =cfg.LOGO_2_URL||'';
+  document.getElementById('cfg-bname').value  =cfg.BANK_NAME||'';
+  document.getElementById('cfg-bcode').value  =cfg.BANK_CODE||'';
+  document.getElementById('cfg-bholder').value=cfg.BANK_HOLDER||'';
+  document.getElementById('cfg-baccount').value=cfg.BANK_ACCOUNT||'';
 
   document.getElementById('s-clients').innerHTML=S.clients.length
     ?S.clients.map(c=>`
@@ -986,6 +1117,8 @@ function saveSettings() {
     COMPANY_PHONE:cfg('cfg-phone'),COMPANY_TAX_ID:cfg('cfg-tax'),
     LOGO_1_NAME:cfg('cfg-l1n'),LOGO_1_URL:cfg('cfg-l1u'),
     LOGO_2_NAME:cfg('cfg-l2n'),LOGO_2_URL:cfg('cfg-l2u'),
+    BANK_NAME:cfg('cfg-bname'),BANK_CODE:cfg('cfg-bcode'),
+    BANK_HOLDER:cfg('cfg-bholder'),BANK_ACCOUNT:cfg('cfg-baccount'),
   };
   google.script.run
     .withSuccessHandler(()=>{Object.assign(S.config,fields);applyConfig();toast('設定已儲存');})
@@ -1005,6 +1138,12 @@ document.querySelectorAll('.mbk').forEach(el=>{
 function td(){const d=new Date();return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
 function p(n){return String(n).padStart(2,'0');}
 function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function driveUrl(url) {
+  if (!url) return '';
+  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  return url;
+}
 function toast(msg,ms=2500){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');

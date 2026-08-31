@@ -124,6 +124,7 @@ body {
 /* ── Items Table ── */
 .items-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin: 10px 0 4px;
   font-size: 13px;
@@ -164,6 +165,9 @@ body {
   resize: none; background: transparent;
   line-height: 1.5; min-height: 34px;
   overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 .spec-ta:focus { background: #fffde7; }
 .remark-ta { min-height: 20px; }
@@ -305,6 +309,39 @@ body {
   }
 }
 @page { size: A4; margin: 0; }
+
+/* ── Mobile / Narrow Screen ── */
+@media (max-width: 880px) {
+  .toolbar { padding: 8px 10px; gap: 6px; }
+  .toolbar button { padding: 6px 10px; font-size: 12px; }
+  .hint { display: none; }
+
+  .page {
+    width: 100%;
+    min-height: auto;
+    margin: 0;
+    padding: 14px;
+    box-shadow: none;
+  }
+
+  .header { flex-direction: column; gap: 14px; }
+  #logoArea { width: 100%; }
+  .quote-meta { width: 100%; text-align: left; }
+  .quote-meta table { width: 100%; margin-left: 0; }
+  .meta-value { width: 100%; }
+  .meta-input { width: 100%; text-align: left; }
+
+  .info-section { flex-direction: column; gap: 0; }
+  .col-half { width: 100%; }
+
+  .items-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .items-table { min-width: 680px; }
+
+  .footer-section { flex-direction: column; }
+
+  .bank-row { grid-template-columns: 1fr; gap: 2px; }
+  .bank-row .bank-label { margin-top: 6px; }
+}
 </style>
 </head>
 <body>
@@ -404,22 +441,24 @@ body {
   </div>
 
   <!-- Items Table -->
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th style="width:28px">項次</th>
-        <th style="width:85px">品名</th>
-        <th>規格說明</th>
-        <th style="width:42px">數量</th>
-        <th style="width:35px">單位</th>
-        <th style="width:72px">單價(未稅)</th>
-        <th style="width:72px">小計</th>
-        <th style="width:72px">備註</th>
-        <th class="act" style="width:24px"></th>
-      </tr>
-    </thead>
-    <tbody id="itemsBody"></tbody>
-  </table>
+  <div class="items-table-wrap">
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:28px">項次</th>
+          <th style="width:85px">品名</th>
+          <th>規格說明</th>
+          <th style="width:42px">數量</th>
+          <th style="width:35px">單位</th>
+          <th style="width:72px">單價(未稅)</th>
+          <th style="width:72px">小計</th>
+          <th style="width:72px">備註</th>
+          <th class="act" style="width:24px"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+  </div>
   <button class="add-row-btn" onclick="addRow()">＋ 新增品項</button>
 
   <!-- Summary -->
@@ -516,7 +555,7 @@ function addRow() {
   tr.id = `row-${id}`;
   tr.innerHTML = `
     <td class="no num-cell">${n}</td>
-    <td class="name"><input class="cell-input" placeholder="品名"></td>
+    <td class="name"><textarea class="spec-ta" rows="1" placeholder="品名" oninput="autoResize(this)"></textarea></td>
     <td class="spec"><textarea class="spec-ta" rows="2" placeholder="規格說明（支援多行）" oninput="autoResize(this)"></textarea></td>
     <td class="qty"><input class="cell-input right" id="qty-${id}" type="number" value="1" min="0" oninput="calcRow(${id})"></td>
     <td class="unit"><input class="cell-input center" value="式"></td>
@@ -657,7 +696,7 @@ function collectForm() {
   const items = [];
   document.querySelectorAll('#itemsBody tr').forEach(tr => {
     items.push({
-      name:   (tr.querySelector('td.name input')       || {}).value || '',
+      name:   (tr.querySelector('td.name textarea')     || {}).value || '',
       spec:   (tr.querySelector('td.spec textarea')    || {}).value || '',
       qty:    (tr.querySelector('td.qty input')        || {}).value || '1',
       unit:   (tr.querySelector('td.unit input')       || {}).value || '式',
@@ -731,7 +770,7 @@ function fillForm(data) {
     const tr = document.getElementById(`row-${id}`);
     if (!tr) return;
     const q = (sel, val) => { const el = tr.querySelector(sel); if (el) el.value = val || ''; };
-    q('td.name input',      item.name);
+    q('td.name textarea',   item.name);
     q('td.spec textarea',   item.spec);
     q('td.qty input',       item.qty  ?? 1);
     q('td.unit input',      item.unit || '式');
