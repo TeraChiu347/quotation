@@ -214,6 +214,10 @@ body {
   font-family: inherit; font-size: 13px;
   resize: none; background: transparent;
   min-height: 68px; line-height: 1.7;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 .footer-ta:focus { background: #f9f9f9; }
 
@@ -311,7 +315,7 @@ body {
 @page { size: A4; margin: 0; }
 
 /* ── Mobile / Narrow Screen ── */
-@media (max-width: 880px) {
+@media screen and (max-width: 880px) {
   .toolbar { padding: 8px 10px; gap: 6px; }
   .toolbar button { padding: 6px 10px; font-size: 12px; }
   .hint { display: none; }
@@ -474,11 +478,11 @@ body {
   <div class="footer-section">
     <div class="footer-box">
       <div class="footer-title">付款條件：</div>
-      <textarea class="footer-ta" id="paymentTa" placeholder="例：&#10;1. 簽約後預付總金額 30% 作為訂金&#10;2. 專案完成並驗收後 7 日內支付尾款"></textarea>
+      <textarea class="footer-ta" id="paymentTa" placeholder="例：&#10;1. 簽約後預付總金額 30% 作為訂金&#10;2. 專案完成並驗收後 7 日內支付尾款" oninput="autoResize(this)"></textarea>
     </div>
     <div class="footer-box">
       <div class="footer-title">備註與條款：</div>
-      <textarea class="footer-ta" id="notesTa" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認"></textarea>
+      <textarea class="footer-ta" id="notesTa" placeholder="例：&#10;1. 本報價未列項目需另行報價&#10;2. 客戶延遲提供資料，工期將等比例順延&#10;3. 完款後進行著作權移轉確認" oninput="autoResize(this)"></textarea>
     </div>
   </div>
 
@@ -621,12 +625,31 @@ function uploadLogo(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const img  = document.getElementById('logoImg');
-    const hint = document.querySelector('.logo-hint');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    if (hint) hint.style.display = 'none';
-    scheduleDraftSave();
+    const tempImg = new Image();
+    tempImg.onload = () => {
+      const maxDim = 600;
+      let { width, height } = tempImg;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width  = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(tempImg, 0, 0, width, height);
+      const dataUrl = file.type === 'image/png'
+        ? canvas.toDataURL('image/png')
+        : canvas.toDataURL('image/jpeg', 0.85);
+
+      const img  = document.getElementById('logoImg');
+      const hint = document.querySelector('.logo-hint');
+      img.src = dataUrl;
+      img.style.display = 'block';
+      if (hint) hint.style.display = 'none';
+      scheduleDraftSave();
+    };
+    tempImg.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -753,6 +776,7 @@ function fillForm(data) {
   set('bankCode',      data.bankCode);
   set('bankHolder',    data.bankHolder);
   set('bankAccount',   data.bankAccount);
+  document.querySelectorAll('.footer-ta').forEach(ta => autoResize(ta));
 
   if (data.logo) {
     const img  = document.getElementById('logoImg');
