@@ -305,8 +305,9 @@ body {
   .act { display: none !important; }
   .add-row-btn { display: none !important; }
   #logoArea { border-color: #999; cursor: default; }
+  #logoArea:not(:has(#logoImg[src]:not([src='']))) { border: none; }
   .logo-hint { display: none !important; }
-  #logoImg { display: block !important; }
+  #logoImg[src]:not([src=""]) { display: block !important; }
   .info-input, .meta-input, .cell-input, .spec-ta, .footer-ta, .bank-input {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
