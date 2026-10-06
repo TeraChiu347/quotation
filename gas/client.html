@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>報價單</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#f1f5f9;color:#1e293b;
+  font-family:-apple-system,'Microsoft JhengHei','PingFang TC',sans-serif;
+  font-size:15px;padding-bottom:40px;}
+#loading{padding:60px 20px;text-align:center;color:#64748b;}
+#notfound{padding:60px 20px;text-align:center;color:#64748b;}
+.wrap{max-width:210mm;margin:0 auto;padding:16px;display:none;}
+.wrap.show{display:block;}
+.panel{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px;margin-top:14px;}
+.panel h2{font-size:14px;font-weight:700;margin-bottom:10px;}
+.folder-btn{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;
+  text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;}
+.folder-hint{font-size:12px;color:#64748b;margin-top:8px;line-height:1.6;}
+.pay-sum{font-size:14px;margin-bottom:10px;}
+.pay-sum b{color:#2563eb;}
+.pf{display:flex;flex-direction:column;gap:8px;}
+.pf input,.pf textarea{border:1px solid #e2e8f0;border-radius:8px;padding:10px;
+  font-family:inherit;font-size:14px;}
+.pf button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:12px;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+  border-bottom:1px solid #e2e8f0;font-size:13px;}
+.pay-row:last-child{border-bottom:none;}
+.pay-st{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.pay-st-待確認{background:#fef3c7;color:#92400e;}
+.pay-st-已確認{background:#dcfce7;color:#166534;}
+.pay-st-已駁回{background:#fee2e2;color:#991b1b;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;
+  z-index:200;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;}
+@media print{ .panel{display:none!important;} }
+</style>
+<?!= include('PrintStyles'); ?>
+</head>
+<body>
+
+<div id="loading">載入報價單中...</div>
+<div id="notfound" style="display:none">找不到這份報價單，請確認連結是否正確。</div>
+
+<div class="wrap" id="wrap">
+  <div id="pa"></div>
+
+  <div class="panel" id="folder-panel" style="display:none">
+    <h2>協作資料夾</h2>
+    <a class="folder-btn" id="folder-link" href="#" target="_blank">📁 開啟專屬資料夾</a>
+    <div class="folder-hint">此資料夾僅開放給報價單上登記的 Email 存取，請用該 Google 帳號登入後再開啟連結。</div>
+  </div>
+
+  <div class="panel">
+    <h2>收款進度</h2>
+    <div class="pay-sum">已確認 <b id="paid-amt">$0</b> / 應收 <span id="total-amt">$0</span></div>
+    <div id="ledger"></div>
+  </div>
+
+  <div class="panel">
+    <h2>回報匯款</h2>
+    <div class="pf">
+      <input id="pf-amount" type="number" placeholder="匯款金額">
+      <input id="pf-last5" placeholder="帳號末五碼（5 位數字）" maxlength="5">
+      <textarea id="pf-note" rows="2" placeholder="備註（選填）"></textarea>
+      <button onclick="submitPayment()">送出回報</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<?!= include('PrintTemplate'); ?>
+<script>
+const token = new URLSearchParams(location.search).get('token');
+let DATA = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!token) { showNotFound(); return; }
+  google.script.run
+    .withSuccessHandler(d => { if (!d) { showNotFound(); return; } DATA = d; render(); })
+    .withFailureHandler(showNotFound)
+    .getQuoteByToken(token);
+});
+
+function showNotFound() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('notfound').style.display = 'block';
+}
+
+function render() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('wrap').classList.add('show');
+  document.getElementById('pa').innerHTML = buildQuoteHtml(DATA.quote, DATA.config);
+
+  if (DATA.folderUrl) {
+    document.getElementById('folder-panel').style.display = 'block';
+    document.getElementById('folder-link').href = DATA.folderUrl;
+  }
+
+  document.getElementById('paid-amt').textContent = '$' + (DATA.paidConfirmed||0).toLocaleString();
+  document.getElementById('total-amt').textContent = '$' + (DATA.quote.total||0).toLocaleString();
+
+  const ledger = DATA.ledger || [];
+  document.getElementById('ledger').innerHTML = ledger.length
+    ? ledger.map(p => `
+      <div class="pay-row">
+        <span>$${p.amount.toLocaleString()} ${p.last5?'（末五碼 '+e(p.last5)+'）':''}<br><small style="color:#94a3b8">${p.time}</small></span>
+        <span class="pay-st pay-st-${p.status}">${p.status}</span>
+      </div>`).join('')
+    : '<div style="color:#94a3b8;font-size:13px">尚無回報記錄</div>';
+}
+
+function submitPayment() {
+  const amount = document.getElementById('pf-amount').value;
+  const last5  = document.getElementById('pf-last5').value.trim();
+  const note   = document.getElementById('pf-note').value;
+  if (!amount || Number(amount) <= 0) { toast('請輸入正確的金額'); return; }
+  if (!/^\d{5}$/.test(last5)) { toast('末五碼需為 5 位數字'); return; }
+  google.script.run
+    .withSuccessHandler(() => {
+      toast('已送出，請等候確認');
+      document.getElementById('pf-amount').value = '';
+      document.getElementById('pf-last5').value = '';
+      document.getElementById('pf-note').value = '';
+      google.script.run.withSuccessHandler(d => { DATA = d; render(); }).getQuoteByToken(token);
+    })
+    .withFailureHandler(err => toast(err && err.message ? err.message : '送出失敗，請重試'))
+    .reportPayment(token, amount, last5, note);
+}
+
+function toast(msg, ms=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), ms);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<script>
+// ── Shared quote-rendering helpers (used by index.html's print preview and client.html) ──
+function p(n){return String(n).padStart(2,'0');}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function driveUrl(url) {
+  if (!url) return '';
+  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  return url;
+}
+
+function buildQuoteHtml(q, cfg) {
+  const lu=driveUrl(q.logo===2?cfg.LOGO_2_URL:cfg.LOGO_1_URL);
+  let exp='—';
+  if(q.rawDate||q.date){
+    const b=new Date((q.rawDate||q.date).replace(/\//g,'-'));
+    b.setDate(b.getDate()+(q.validDays||7));
+    exp=`${b.getFullYear()}/${p(b.getMonth()+1)}/${p(b.getDate())}`;
+  }
+  const dd=q.rawDate?q.rawDate.replace(/-/g,'/'):q.date||'';
+  const rowsHtml=(q.items||[]).map((it,i)=>{
+    const pr=parseFloat(String(it.price||'').replace(/,/g,''))||0;
+    const qty=parseFloat(it.qty)||0, sub=pr*qty;
+    const gift=String(it.price||'').trim()==='贈送';
+    return `<tr>
+      <td class="t-no">${i+1}</td><td class="t-name">${e(it.name||'')}</td>
+      <td class="t-spec">${e(it.spec||'')}</td>
+      <td class="t-qty">${qty}</td><td class="t-unit">${e(it.unit||'式')}</td>
+      <td class="t-price">${gift?'贈送':pr.toLocaleString()}</td>
+      <td class="t-sub">${gift?'贈送':sub.toLocaleString()}</td>
+      <td>${e(it.remark||'')}</td></tr>`;
+  }).join('');
+  const blanks=Math.max(0,5-(q.items||[]).length);
+  const blankHtml=Array(blanks).fill(`<tr><td class="t-no" style="color:#ddd">&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td class="t-sub"></td><td></td></tr>`).join('');
+
+  return `
+    <div class="p-hdr">
+      <div class="p-logo">${lu?`<img src="${lu}" onerror="this.parentElement.innerHTML='<span class=\\'p-logo-e\\'>公司LOGO</span>'" alt="LOGO">`:'<span class="p-logo-e">公司LOGO</span>'}</div>
+      <div class="p-meta"><table>
+        <tr><td class="p-ml">報價編號：</td><td class="p-mv">${e(q.no||'草稿')}</td></tr>
+        <tr><td class="p-ml">報價有效期限(天)：</td><td class="p-mv">${q.validDays||7}</td></tr>
+        <tr><td class="p-ml">報價日期：</td><td class="p-mv">${dd}</td></tr>
+        <tr><td class="p-ml">報價至期限：</td><td class="p-mv p-exp">${exp}</td></tr>
+      </table></div>
+    </div>
+    <div class="p-info">
+      <div class="p-ic">
+        <div class="p-ir"><span class="p-il">公司名稱：</span><span class="p-iv">${e(cfg.COMPANY_NAME||'')}</span></div>
+        <div class="p-ir"><span class="p-il">聯絡地址：</span><span class="p-iv">${e(cfg.COMPANY_ADDRESS||'')}</span></div>
+        <div class="p-ir"><span class="p-il">電話/Email：</span><span class="p-iv">${e(cfg.COMPANY_PHONE||'')}</span></div>
+        <div class="p-ir"><span class="p-il">統一編號：</span><span class="p-iv">${e(cfg.COMPANY_TAX_ID||'')}</span></div>
+      </div>
+      <div class="p-ic">
+        <div class="p-ir"><span class="p-il">客戶公司：</span><span class="p-iv">${e(q.client||'')}</span></div>
+        <div class="p-ir"><span class="p-il">電話：</span><span class="p-iv">${e(q.phone||'')}</span></div>
+        <div class="p-ir"><span class="p-il">聯絡人：</span><span class="p-iv">${e(q.contact||'')}</span></div>
+        <div class="p-ir"><span class="p-il">Email：</span><span class="p-iv">${e(q.email||'')}</span></div>
+      </div>
+    </div>
+    <table class="p-tbl"><thead><tr>
+      <th style="width:28px">項次</th><th style="width:80px">品名</th>
+      <th>規格說明</th><th style="width:38px">數量</th>
+      <th style="width:35px">單位</th><th style="width:70px">單價(未稅)</th>
+      <th style="width:70px">小計</th><th style="width:65px">備註</th>
+    </tr></thead><tbody>${rowsHtml}${blankHtml}</tbody></table>
+    <div class="p-sum"><table>
+      <tr><td>未稅小計</td><td>${(q.subtotal||0).toLocaleString()}</td></tr>
+      <tr><td>營業稅 5%</td><td>${(q.tax||0).toLocaleString()}</td></tr>
+      <tr class="p-tr"><td>總計金額（含稅）</td><td class="p-tv">${(q.total||0).toLocaleString()}</td></tr>
+    </table></div>
+    <div class="p-ft">
+      <div class="p-fb"><div class="p-fbt">付款條件：</div>
+        <div class="p-fbc">${e(q.payment||'')}</div></div>
+      <div class="p-fb"><div class="p-fbt">備註與條款：</div>
+        <div class="p-fbc">${e(q.notes||'')}</div></div>
+    </div>
+    ${(cfg.BANK_NAME||cfg.BANK_ACCOUNT)?`
+    <div style="margin-top:10px;border:1px solid #999;padding:8px 10px;">
+      <div class="p-fbt">收款銀行資訊：</div>
+      <div style="display:grid;grid-template-columns:60px 1fr 60px 1fr;gap:6px 8px;margin-top:6px;font-size:12px;">
+        <span style="color:#555">銀行名稱</span><span>${e(cfg.BANK_NAME||'')}</span>
+        <span style="color:#555">銀行代碼</span><span>${e(cfg.BANK_CODE||'')}</span>
+        <span style="color:#555">戶　　名</span><span>${e(cfg.BANK_HOLDER||'')}</span>
+        <span style="color:#555">帳　　號</span><span>${e(cfg.BANK_ACCOUNT||'')}</span>
+      </div>
+    </div>`:''}
+    `;
+}
+</script>

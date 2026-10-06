@@ -196,7 +196,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
   opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none;}
 #toast.show{opacity:1;}
 
-/* ── Print Preview ── */
+/* ── Print Preview (modal chrome only — quote rendering styles live in PrintStyles.html) ── */
 #pmod{position:fixed;inset:0;background:#e8e8e8;z-index:300;
   display:none;overflow-y:auto;}
 #pmod.open{display:block;}
@@ -207,60 +207,24 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
 .bprint{background:#27ae60;color:#fff;}
 .bclose{background:#e74c3c;color:#fff;}
 
-/* Print Area */
-#pa{width:210mm;margin:20px auto;background:#fff;padding:14mm 15mm;
-  font-family:'Microsoft JhengHei','PingFang TC',sans-serif;
-  font-size:13px;box-shadow:0 0 20px rgba(0,0,0,.1);}
-.p-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
-.p-logo{width:44%;min-height:80px;border:1px solid #aaa;display:flex;
-  align-items:center;justify-content:center;overflow:hidden;}
-.p-logo img{max-width:100%;max-height:90px;object-fit:contain;}
-.p-logo-e{color:#999;font-size:14px;font-weight:bold;}
-.p-meta{text-align:right;}
-.p-meta table{border-collapse:collapse;margin-left:auto;}
-.p-meta td{padding:3px 5px;}
-.p-ml{color:#555;white-space:nowrap;}
-.p-mv{font-weight:bold;padding-left:15px;}
-.p-exp{color:#e74c3c;font-weight:bold;}
-.p-info{display:flex;gap:24px;margin:14px 0;}
-.p-ic{width:50%;}
-.p-ir{display:flex;border-bottom:1px solid #e0e0e0;padding:4px 0;margin-bottom:2px;}
-.p-il{min-width:90px;font-weight:bold;font-size:12px;color:#444;flex-shrink:0;}
-.p-iv{font-size:12px;flex:1;}
-.p-tbl{width:100%;border-collapse:collapse;margin:10px 0 4px;font-size:12px;}
-.p-tbl th{background:#f0f0f0;border:1px solid #bbb;padding:6px 4px;text-align:center;font-size:12px;}
-.p-tbl td{border:1px solid #ccc;padding:4px 6px;vertical-align:top;}
-.t-no{width:28px;text-align:center;color:#666;}
-.t-name{width:80px;font-weight:500;}
-.t-spec{font-size:11px;color:#444;white-space:pre-wrap;}
-.t-qty,.t-price,.t-sub{text-align:right;white-space:nowrap;}
-.t-unit{text-align:center;width:35px;}
-.t-sub{background:#fafafa;font-weight:bold;}
-.p-sum{display:flex;justify-content:flex-end;margin:8px 0 12px;}
-.p-sum table{border-collapse:collapse;min-width:200px;}
-.p-sum td{border:1px solid #bbb;padding:5px 10px;}
-.p-sum td:first-child{background:#f5f5f5;font-weight:bold;white-space:nowrap;}
-.p-sum td:last-child{text-align:right;font-weight:bold;min-width:100px;}
-.p-tr td{font-size:14px;font-weight:bold;}
-.p-tv{color:#e74c3c;}
-.p-ft{display:flex;gap:14px;}
-.p-fb{flex:1;border:1px solid #999;padding:8px 10px;}
-.p-fbt{font-weight:bold;font-size:12px;border-bottom:1px solid #e0e0e0;padding-bottom:4px;margin-bottom:6px;}
-.p-fbc{font-size:12px;white-space:pre-wrap;line-height:1.7;}
-
 @media print{
   #ptb{display:none!important;}
-  body{background:#fff;overflow:auto;}
-  #pmod{overflow:visible;}
-  #pa{box-shadow:none;margin:0;padding:12mm 14mm;}
 }
-@page{size:A4;margin:0;}
 
-@media(max-width:430px){
-  #pa{width:100%;padding:8px;font-size:11px;}
-  .p-info{flex-direction:column;gap:0;}
-  .p-ic{width:100%;}
-}
+/* ── Case / Payment ── */
+.qst-進行中{background:#dbeafe;color:#1e40af;}
+.qst-已完成{background:#e2e8f0;color:#334155;}
+.qst-已取消{background:#fee2e2;color:#991b1b;}
+.case-progress{font-size:12px;color:var(--muted);margin-top:4px;}
+.case-bar{height:5px;border-radius:3px;background:var(--bg);margin-top:3px;overflow:hidden;}
+.case-bar-fill{height:100%;background:var(--success);}
+.pay-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
+.pay-row:last-child{border-bottom:none;}
+.pay-info{flex:1;font-size:13px;}
+.pay-amt{font-weight:700;color:var(--primary);}
+.pay-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.nb-badge{position:relative;}
+.nb-dot{position:absolute;top:-2px;right:18%;width:8px;height:8px;border-radius:50%;background:var(--danger);}
 
 /* ── Desktop / Wide Screen ── */
 @media(min-width:900px){
@@ -286,6 +250,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
     max-height:80vh;}
 }
 </style>
+<?!= include('PrintStyles'); ?>
 </head>
 <body>
 <div id="app">
@@ -305,6 +270,12 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
   <div id="view-history" class="view">
     <div class="vhdr"><h1>歷史紀錄</h1></div>
     <div class="ca" id="history-list"></div>
+  </div>
+
+  <!-- ── Cases ── -->
+  <div id="view-cases" class="view">
+    <div class="vhdr"><h1>案件管理</h1></div>
+    <div class="ca" id="cases-list"></div>
   </div>
 
   <!-- ── Edit ── -->
@@ -427,6 +398,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
       </svg>歷史</button>
+    <button class="nb nb-badge" id="nb-cases" onclick="showView('cases')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      </svg><span id="nb-cases-dot"></span>案件</button>
     <button class="nb" id="nb-settings" onclick="showView('settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="3"/>
@@ -522,6 +497,39 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
   </div>
 </div>
 
+<!-- Modal: Case Detail (share link / Drive folder / payment ledger) -->
+<div class="mbk ctr" id="m-case">
+  <div class="mdlg">
+    <div class="mhdr"><span class="mtitle" id="case-title">案件</span>
+      <button class="mclose" onclick="cm('m-case')">×</button></div>
+    <div id="case-body" style="padding:4px 0;max-height:70vh;overflow-y:auto;"></div>
+    <div class="mfoot">
+      <button class="mcancel" onclick="cm('m-case')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Manual Payment -->
+<div class="mbk ctr" id="m-manualpay">
+  <div class="mdlg">
+    <div class="mhdr"><span class="mtitle">手動登記收款</span>
+      <button class="mclose" onclick="cm('m-manualpay')">×</button></div>
+    <div style="padding:4px 0;">
+      <input type="hidden" id="mp-no">
+      <div class="fr" style="border-bottom:1px solid var(--border)"><span class="fl">金額</span>
+        <input class="fi" id="mp-amount" type="number" placeholder="0"></div>
+      <div class="fr" style="border-bottom:1px solid var(--border)"><span class="fl">方式</span>
+        <input class="fi" id="mp-method" value="現金" placeholder="現金 / 轉帳 / 其他"></div>
+      <div class="fr"><span class="fl">備註</span>
+        <input class="fi" id="mp-note" placeholder="（選填）"></div>
+    </div>
+    <div class="mfoot">
+      <button class="mcancel" onclick="cm('m-manualpay')">取消</button>
+      <button class="mok" onclick="submitManualPay()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- Print Preview -->
@@ -535,17 +543,22 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);cursor:p
 
 <script>
 // ── State ──
-let S = { config:{}, clients:[], templates:{}, quotes:[] };
+let S = { config:{}, clients:[], templates:{}, quotes:[], payments:[] };
 let EQ = null;       // current edit quote
 let tplCat = '';     // active template category
 
 // ── Init ──
 window.addEventListener('DOMContentLoaded', () => {
   google.script.run
-    .withSuccessHandler(d => { S = d; document.getElementById('loading').style.display='none'; applyConfig(); showView('home'); })
+    .withSuccessHandler(d => { S = d; document.getElementById('loading').style.display='none'; applyConfig(); showView('home'); updatePendingBadge(); })
     .withFailureHandler(() => { document.getElementById('loading').innerHTML='<p style="color:red;padding:20px">載入失敗，請重新整理頁面</p>'; })
     .loadAll();
 });
+
+function updatePendingBadge() {
+  const n = (S.payments||[]).filter(p => p.status==='待確認').length;
+  document.getElementById('nb-cases-dot').className = n ? 'nb-dot' : '';
+}
 
 function applyConfig() {
   document.getElementById('home-title').textContent = S.config.COMPANY_NAME || '報價單系統';
@@ -560,6 +573,7 @@ function showView(v) {
   if (nb) nb.classList.add('active');
   if (v === 'home')     renderList('home-list',    S.quotes.slice(0,10));
   if (v === 'history')  renderList('history-list', S.quotes);
+  if (v === 'cases')    renderCases();
   if (v === 'settings') renderSettings();
 }
 
@@ -582,9 +596,142 @@ function renderList(id, qs) {
       <div class="qbtns">
         <button class="qbtn" onclick="event.stopPropagation();prevQ('${q.no}')">預覽</button>
         <button class="qbtn" onclick="event.stopPropagation();copyQ('${q.no}')">複製</button>
+        ${q.status!=='草稿'?`<button class="qbtn" onclick="event.stopPropagation();openCaseModal('${q.no}')">開案/連結</button>`:''}
         <button class="qbtn red" onclick="event.stopPropagation();delQ('${q.no}')">刪除</button>
       </div>
     </div>`).join('');
+}
+
+// ── Cases ──
+function renderCases() {
+  const qs = S.quotes.filter(q => q.status !== '草稿');
+  const el = document.getElementById('cases-list');
+  if (!qs.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ico">📁</div>還沒有開案中的報價單</div>';
+    return;
+  }
+  el.innerHTML = qs.map(q => {
+    const paid = (S.payments||[]).filter(p => p.no===q.no && p.status==='已確認').reduce((s,p)=>s+p.amount,0);
+    const pct = q.total ? Math.min(100, Math.round(paid/q.total*100)) : 0;
+    return `
+    <div class="card qc" onclick="openCaseModal('${q.no}')">
+      <div class="cb">
+        <div class="qc-top"><span class="qno">${q.no}</span>
+          <span class="qst qst-${q.status}">${q.status}</span></div>
+        <div class="qclient">${e(q.client||'（未填甲方）')}</div>
+        <div class="case-progress">已收 $${paid.toLocaleString()} / $${(q.total||0).toLocaleString()}${q.driveFolderUrl?' · 📁 已建資料夾':''}</div>
+        <div class="case-bar"><div class="case-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCaseModal(no) {
+  const q = S.quotes.find(q => q.no===no); if (!q) return;
+  document.getElementById('case-title').textContent = '案件 ' + no;
+  document.getElementById('case-body').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">處理中...</div>';
+  om('m-case');
+  google.script.run
+    .withSuccessHandler(res => {
+      const idx = S.quotes.findIndex(x=>x.no===no);
+      if (idx>=0) { S.quotes[idx].shareToken = S.quotes[idx].shareToken||'1'; S.quotes[idx].driveFolderUrl = res.folderUrl; S.quotes[idx].status = (S.quotes[idx].status==='草稿'||S.quotes[idx].status==='已送出')?'進行中':S.quotes[idx].status; }
+      window._caseLinks = { no, shareUrl: res.shareUrl, folderUrl: res.folderUrl };
+      renderCaseBody(no);
+      if (res.warning) toast(res.warning, 4000);
+    })
+    .withFailureHandler(()=>{ document.getElementById('case-body').innerHTML = '<div style="padding:20px;color:var(--danger)">開案失敗，請重試</div>'; })
+    .openCase(no);
+}
+
+function renderCaseBody(no) {
+  const links = (window._caseLinks && window._caseLinks.no===no) ? window._caseLinks : {shareUrl:'',folderUrl:''};
+  const { shareUrl, folderUrl } = links;
+  const pays = (S.payments||[]).filter(p=>p.no===no);
+  const q = S.quotes.find(x=>x.no===no);
+  const paid = pays.filter(p=>p.status==='已確認').reduce((s,p)=>s+p.amount,0);
+  document.getElementById('case-body').innerHTML = `
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <div class="fl" style="margin-bottom:6px">客戶分享連結</div>
+      <div style="display:flex;gap:6px">
+        <input class="fi" readonly value="${e(shareUrl)}" style="border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px" onclick="this.select()">
+        <button class="bsm" onclick="navigator.clipboard.writeText('${shareUrl}').then(()=>toast('已複製連結'))">複製</button>
+      </div>
+      <div style="margin-top:8px"><a href="${folderUrl}" target="_blank" class="bsm" style="display:inline-flex;text-decoration:none">📁 開啟 Drive 資料夾</a></div>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span class="fl">收款進度</span>
+        <button class="bsm" onclick="openManualPay('${no}')">＋ 手動登記</button>
+      </div>
+      <div style="font-size:14px">已確認 <b class="pay-amt">$${paid.toLocaleString()}</b> / 應收 $${(q?.total||0).toLocaleString()}</div>
+    </div>
+    <div style="padding:10px 14px">
+      <div class="fl" style="margin-bottom:6px">收款記錄</div>
+      ${pays.length? pays.map(p=>`
+        <div class="pay-row">
+          <div class="pay-info">
+            <span class="pay-amt">$${p.amount.toLocaleString()}</span> ${p.last5?`（末五碼 ${e(p.last5)}）`:''}
+            <div class="pay-meta">${p.time} · ${p.method} · ${p.status}</div>
+          </div>
+          ${p.status==='待確認'?`
+            <button class="bsm pri" onclick="confirmPay('${p.id}',true,'${no}')">確認</button>
+            <button class="bsm" style="color:var(--danger);border-color:var(--danger)" onclick="confirmPay('${p.id}',false,'${no}')">駁回</button>
+          `:''}
+        </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:10px 0">尚無收款記錄</div>'}
+    </div>
+    <div style="padding:10px 14px;display:flex;gap:8px">
+      <button class="bsm" onclick="updateCaseStatus('${no}','已完成')">標記已完成</button>
+      <button class="bsm" style="color:var(--danger);border-color:var(--danger)" onclick="updateCaseStatus('${no}','已取消')">標記已取消</button>
+    </div>
+  `;
+}
+
+function confirmPay(id, approve, no) {
+  google.script.run
+    .withSuccessHandler(()=>{
+      const p = S.payments.find(x=>x.id===id);
+      if (p) p.status = approve?'已確認':'已駁回';
+      updatePendingBadge();
+      renderCaseBody(no);
+      toast(approve?'已確認收款':'已駁回');
+    })
+    .withFailureHandler(()=>toast('操作失敗'))
+    .confirmPayment(id, approve, '');
+}
+
+function openManualPay(no) {
+  document.getElementById('mp-no').value = no;
+  document.getElementById('mp-amount').value = '';
+  document.getElementById('mp-method').value = '現金';
+  document.getElementById('mp-note').value = '';
+  om('m-manualpay');
+}
+
+function submitManualPay() {
+  const no = document.getElementById('mp-no').value;
+  const amount = document.getElementById('mp-amount').value;
+  const method = document.getElementById('mp-method').value;
+  const note = document.getElementById('mp-note').value;
+  if (!amount || Number(amount) <= 0) { toast('請輸入正確金額'); return; }
+  google.script.run
+    .withSuccessHandler(()=>{
+      cm('m-manualpay');
+      google.script.run.withSuccessHandler(d=>{ S.payments=d.payments; updatePendingBadge(); renderCaseBody(no); renderCases(); toast('已登記收款'); }).loadAll();
+    })
+    .withFailureHandler(()=>toast('登記失敗'))
+    .addManualPayment(no, amount, method, note);
+}
+
+function updateCaseStatus(no, status) {
+  google.script.run
+    .withSuccessHandler(()=>{
+      const q = S.quotes.find(x=>x.no===no);
+      if (q) q.status = status;
+      cm('m-case'); renderCases(); renderList('history-list', S.quotes);
+      toast('狀態已更新為「'+status+'」');
+    })
+    .withFailureHandler(()=>toast('更新失敗'))
+    .setCaseStatus(no, status);
 }
 
 // ── New / Edit ──
@@ -842,82 +989,7 @@ function delQ(no) {
 function prevQ(no){ const q=S.quotes.find(q=>q.no===no); if(q) showPrint(q); }
 
 function showPrint(q) {
-  const cfg=S.config;
-  const lu=driveUrl(q.logo===2?cfg.LOGO_2_URL:cfg.LOGO_1_URL);
-  let exp='—';
-  if(q.rawDate||q.date){
-    const b=new Date((q.rawDate||q.date).replace(/\//g,'-'));
-    b.setDate(b.getDate()+(q.validDays||7));
-    exp=`${b.getFullYear()}/${p(b.getMonth()+1)}/${p(b.getDate())}`;
-  }
-  const dd=q.rawDate?q.rawDate.replace(/-/g,'/'):q.date||'';
-  const rowsHtml=(q.items||[]).map((it,i)=>{
-    const pr=parseFloat(String(it.price||'').replace(/,/g,''))||0;
-    const qty=parseFloat(it.qty)||0, sub=pr*qty;
-    const gift=String(it.price||'').trim()==='贈送';
-    return `<tr>
-      <td class="t-no">${i+1}</td><td class="t-name">${e(it.name||'')}</td>
-      <td class="t-spec">${e(it.spec||'')}</td>
-      <td class="t-qty">${qty}</td><td class="t-unit">${e(it.unit||'式')}</td>
-      <td class="t-price">${gift?'贈送':pr.toLocaleString()}</td>
-      <td class="t-sub">${gift?'贈送':sub.toLocaleString()}</td>
-      <td>${e(it.remark||'')}</td></tr>`;
-  }).join('');
-  const blanks=Math.max(0,5-(q.items||[]).length);
-  const blankHtml=Array(blanks).fill(`<tr><td class="t-no" style="color:#ddd">&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td class="t-sub"></td><td></td></tr>`).join('');
-
-  document.getElementById('pa').innerHTML=`
-    <div class="p-hdr">
-      <div class="p-logo">${lu?`<img src="${lu}" onerror="this.parentElement.innerHTML='<span class=\\'p-logo-e\\'>公司LOGO</span>'" alt="LOGO">`:'<span class="p-logo-e">公司LOGO</span>'}</div>
-      <div class="p-meta"><table>
-        <tr><td class="p-ml">報價編號：</td><td class="p-mv">${e(q.no||'草稿')}</td></tr>
-        <tr><td class="p-ml">報價有效期限(天)：</td><td class="p-mv">${q.validDays||7}</td></tr>
-        <tr><td class="p-ml">報價日期：</td><td class="p-mv">${dd}</td></tr>
-        <tr><td class="p-ml">報價至期限：</td><td class="p-mv p-exp">${exp}</td></tr>
-      </table></div>
-    </div>
-    <div class="p-info">
-      <div class="p-ic">
-        <div class="p-ir"><span class="p-il">公司名稱：</span><span class="p-iv">${e(cfg.COMPANY_NAME||'')}</span></div>
-        <div class="p-ir"><span class="p-il">聯絡地址：</span><span class="p-iv">${e(cfg.COMPANY_ADDRESS||'')}</span></div>
-        <div class="p-ir"><span class="p-il">電話/Email：</span><span class="p-iv">${e(cfg.COMPANY_PHONE||'')}</span></div>
-        <div class="p-ir"><span class="p-il">統一編號：</span><span class="p-iv">${e(cfg.COMPANY_TAX_ID||'')}</span></div>
-      </div>
-      <div class="p-ic">
-        <div class="p-ir"><span class="p-il">客戶公司：</span><span class="p-iv">${e(q.client||'')}</span></div>
-        <div class="p-ir"><span class="p-il">電話：</span><span class="p-iv">${e(q.phone||'')}</span></div>
-        <div class="p-ir"><span class="p-il">聯絡人：</span><span class="p-iv">${e(q.contact||'')}</span></div>
-        <div class="p-ir"><span class="p-il">Email：</span><span class="p-iv">${e(q.email||'')}</span></div>
-      </div>
-    </div>
-    <table class="p-tbl"><thead><tr>
-      <th style="width:28px">項次</th><th style="width:80px">品名</th>
-      <th>規格說明</th><th style="width:38px">數量</th>
-      <th style="width:35px">單位</th><th style="width:70px">單價(未稅)</th>
-      <th style="width:70px">小計</th><th style="width:65px">備註</th>
-    </tr></thead><tbody>${rowsHtml}${blankHtml}</tbody></table>
-    <div class="p-sum"><table>
-      <tr><td>未稅小計</td><td>${(q.subtotal||0).toLocaleString()}</td></tr>
-      <tr><td>營業稅 5%</td><td>${(q.tax||0).toLocaleString()}</td></tr>
-      <tr class="p-tr"><td>總計金額（含稅）</td><td class="p-tv">${(q.total||0).toLocaleString()}</td></tr>
-    </table></div>
-    <div class="p-ft">
-      <div class="p-fb"><div class="p-fbt">付款條件：</div>
-        <div class="p-fbc">${e(q.payment||'')}</div></div>
-      <div class="p-fb"><div class="p-fbt">備註與條款：</div>
-        <div class="p-fbc">${e(q.notes||'')}</div></div>
-    </div>
-    ${(cfg.BANK_NAME||cfg.BANK_ACCOUNT)?`
-    <div style="margin-top:10px;border:1px solid #999;padding:8px 10px;">
-      <div class="p-fbt">收款銀行資訊：</div>
-      <div style="display:grid;grid-template-columns:60px 1fr 60px 1fr;gap:6px 8px;margin-top:6px;font-size:12px;">
-        <span style="color:#555">銀行名稱</span><span>${e(cfg.BANK_NAME||'')}</span>
-        <span style="color:#555">銀行代碼</span><span>${e(cfg.BANK_CODE||'')}</span>
-        <span style="color:#555">戶　　名</span><span>${e(cfg.BANK_HOLDER||'')}</span>
-        <span style="color:#555">帳　　號</span><span>${e(cfg.BANK_ACCOUNT||'')}</span>
-      </div>
-    </div>`:''}
-    `;
+  document.getElementById('pa').innerHTML = buildQuoteHtml(q, S.config);
   document.getElementById('pmod').classList.add('open');
 }
 function cp() { document.getElementById('pmod').classList.remove('open'); }
@@ -1134,21 +1206,14 @@ document.querySelectorAll('.mbk').forEach(el=>{
   el.addEventListener('click',ev=>{if(ev.target===el) el.classList.remove('open');});
 });
 
-// ── Utils ──
+// ── Utils (e/p/driveUrl come from the included PrintTemplate.html) ──
 function td(){const d=new Date();return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
-function p(n){return String(n).padStart(2,'0');}
-function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function driveUrl(url) {
-  if (!url) return '';
-  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
-  return url;
-}
 function toast(msg,ms=2500){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),ms);
 }
 </script>
+<?!= include('PrintTemplate'); ?>
 </body>
 </html>
