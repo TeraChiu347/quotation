@@ -21,10 +21,6 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
 // ── Spreadsheet Helper ──
 function ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
 
