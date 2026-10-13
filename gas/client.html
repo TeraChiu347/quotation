@@ -133,6 +133,7 @@ function driveUrl(url) {
   if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
   return url;
 }
+function logoFallback(img) { img.parentElement.innerHTML = '<span class="p-logo-e">公司LOGO</span>'; }
 
 function buildQuoteHtml(q, cfg) {
   const lu=driveUrl(q.logo===2?cfg.LOGO_2_URL:cfg.LOGO_1_URL);
@@ -160,7 +161,7 @@ function buildQuoteHtml(q, cfg) {
 
   return `
     <div class="p-hdr">
-      <div class="p-logo">${lu?`<img src="${lu}" onerror="this.parentElement.innerHTML='<span class=\\'p-logo-e\\'>公司LOGO</span>'" alt="LOGO">`:'<span class="p-logo-e">公司LOGO</span>'}</div>
+      <div class="p-logo">${lu?`<img src="${lu}" onerror="logoFallback(this)" alt="LOGO">`:'<span class="p-logo-e">公司LOGO</span>'}</div>
       <div class="p-meta"><table>
         <tr><td class="p-ml">報價編號：</td><td class="p-mv">${e(q.no||'草稿')}</td></tr>
         <tr><td class="p-ml">報價有效期限(天)：</td><td class="p-mv">${q.validDays||7}</td></tr>
